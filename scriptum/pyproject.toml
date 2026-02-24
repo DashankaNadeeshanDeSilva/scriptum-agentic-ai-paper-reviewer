@@ -1,0 +1,146 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scriptum-ai"
+version = "0.1.0"
+description = "SCRIPTUM - Agentic AI Academic Paper Review System"
+readme = "../README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "SCRIPTUM Contributors" },
+]
+keywords = ["ai", "peer-review", "academic", "llm", "agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Core API Framework
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.6",
+
+    # Data Validation & Settings
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.1.0",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0.25",
+    "aiosqlite>=0.19.0",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.0",
+
+    # Agent Framework
+    "langgraph>=0.0.20",
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+
+    # LLM Gateway
+    "litellm>=1.17.0",
+
+    # Vector Store & Embeddings
+    "chromadb>=0.4.22",
+
+    # Document Processing
+    "pymupdf>=1.23.0",
+    "requests>=2.31.0",
+
+    # Research APIs
+    "arxiv>=2.1.0",
+
+    # Utilities
+    "loguru>=0.7.2",
+    "pyyaml>=6.0.1",
+    "cryptography>=42.0.0",
+    "python-dotenv>=1.0.0",
+    "typer>=0.9.0",
+    "rich>=13.7.0",
+
+    # HTTP Client
+    "httpx>=0.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+
+    # Linting & Formatting
+    "ruff>=0.1.14",
+    "mypy>=1.8.0",
+
+    # Type Stubs
+    "types-pyyaml>=6.0.12",
+    "types-requests>=2.31.0",
+]
+
+[project.scripts]
+scriptum = "cli.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/scriptum-ai/scriptum"
+Repository = "https://github.com/scriptum-ai/scriptum"
+Issues = "https://github.com/scriptum-ai/scriptum/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend", "agents", "tools", "cli", "config"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "langgraph.*",
+    "langchain.*",
+    "langchain_core.*",
+    "litellm.*",
+    "chromadb.*",
+    "arxiv.*",
+    "fitz.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
