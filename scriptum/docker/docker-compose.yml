@@ -1,0 +1,54 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://scriptum:scriptum@db/scriptum
+      - GROBID_URL=http://grobid:8070
+    depends_on:
+      - db
+      - grobid
+    volumes:
+      - scriptum_config:/root/.scriptum
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=scriptum
+      - POSTGRES_USER=scriptum
+      - POSTGRES_PASSWORD=scriptum
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    ports:
+      - "8070:8070"
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  postgres_data:
+  chroma_data:
+  scriptum_config:
