@@ -1,21 +1,33 @@
-"""SCRIPTUM FastAPI application entry point."""
+"""SCRIPTUM FastAPI application entry point.
 
+Sets up the FastAPI app with CORS, structured logging, request ID middleware,
+and all API routers (reviews, settings, files, websocket).
+"""
+
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
+
+from backend.api.v1 import files, reviews, settings, websocket
+from backend.core.logging import generate_request_id, request_id_ctx, setup_logging
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Handle startup and shutdown events."""
     # Startup
-    # TODO: Initialize database connection
-    # TODO: Initialize LLM clients
-    # TODO: Initialize agent manager
+    setup_logging(level="INFO", json_format=True, log_to_file=True)
+    logger.info("SCRIPTUM backend starting up")
+    # TODO: Initialize database connection (Phase 1, Step 1.3)
+    # TODO: Initialize LLM clients (Phase 2, Step 2.3)
+    # TODO: Initialize agent manager (Phase 3, Step 3.3)
     yield
     # Shutdown
+    logger.info("SCRIPTUM backend shutting down")
     # TODO: Close database connections
     # TODO: Cleanup background tasks
 
@@ -29,6 +41,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -37,10 +50,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# TODO: Include routers after they're implemented
-# app.include_router(reviews.router, prefix="/api/v1")
-# app.include_router(settings.router, prefix="/api/v1")
-# app.include_router(files.router, prefix="/api/v1")
+
+# Request ID middleware for correlation
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
+    """Attach a unique request ID to every HTTP request for log correlation."""
+    req_id = request.headers.get("X-Request-ID", generate_request_id())
+    request.state.request_id = req_id
+    token = request_id_ctx.set(req_id)
+
+    start_time = time.perf_counter()
+    response: Response = await call_next(request)
+    duration_ms = (time.perf_counter() - start_time) * 1000
+
+    response.headers["X-Request-ID"] = req_id
+
+    logger.info(
+        "Request completed",
+        method=request.method,
+        path=str(request.url.path),
+        status=response.status_code,
+        duration_ms=round(duration_ms, 2),
+        request_id=req_id,
+    )
+
+    request_id_ctx.reset(token)
+    return response
+
+
+# API routers
+app.include_router(reviews.router, prefix="/api/v1")
+app.include_router(settings.router, prefix="/api/v1")
+app.include_router(files.router, prefix="/api/v1")
+app.include_router(websocket.router, prefix="/ws")
 
 
 @app.get("/health")
