@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from backend.api.v1 import files, reviews, settings, websocket
+from backend.core.database import close_db, init_db
 from backend.core.logging import generate_request_id, request_id_ctx, setup_logging
 
 
@@ -22,14 +23,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup
     setup_logging(level="INFO", json_format=True, log_to_file=True)
     logger.info("SCRIPTUM backend starting up")
-    # TODO: Initialize database connection (Phase 1, Step 1.3)
+    await init_db()
+    logger.info("Database initialized")
     # TODO: Initialize LLM clients (Phase 2, Step 2.3)
     # TODO: Initialize agent manager (Phase 3, Step 3.3)
     yield
     # Shutdown
     logger.info("SCRIPTUM backend shutting down")
-    # TODO: Close database connections
-    # TODO: Cleanup background tasks
+    await close_db()
+    logger.info("Database connections closed")
 
 
 app = FastAPI(
