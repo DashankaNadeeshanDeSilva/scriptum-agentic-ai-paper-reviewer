@@ -216,6 +216,15 @@ class SettingsResponse(BaseModel):
     agents: dict = Field(default_factory=dict)
 
 
+class SettingsUpdateRequest(BaseModel):
+    """Partial settings update. All fields are optional; only provided fields are merged."""
+
+    llm: dict | None = Field(default=None, description="Partial LLM config update")
+    mcp: dict | None = Field(default=None, description="Partial MCP config update")
+    apis: dict | None = Field(default=None, description="Partial APIs config update")
+    agents: dict | None = Field(default=None, description="Partial agents config update")
+
+
 class TestConnectionRequest(BaseModel):
     """Request to test an LLM provider connection."""
 

@@ -4,15 +4,32 @@ Manages application configuration: LLM providers, MCP tools, API keys,
 and preferences. Supports connection testing and Ollama model discovery.
 """
 
-from fastapi import APIRouter, Depends
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter, Body, Depends
+from loguru import logger
 
 from backend.api.deps import get_request_id
+from backend.core.config import (
+    get_settings,
+    load_settings,
+    save_settings,
+    settings_to_api_response,
+)
+from backend.schemas.review import (
+    SettingsResponse,
+    SettingsUpdateRequest,
+    TestConnectionRequest,
+    TestConnectionResponse,
+)
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
-@router.get("")
-async def get_settings(
+@router.get("", response_model=SettingsResponse)
+async def get_current_settings(
     request_id: str = Depends(get_request_id),
 ) -> dict:
     """Get the current application settings.
@@ -20,34 +37,14 @@ async def get_settings(
     Returns the full configuration (LLM providers, MCP tools, APIs, preferences)
     with API keys masked for security.
     """
-    # TODO: Load from ~/.scriptum/config.yaml via config module
-    # TODO: Mask API keys (show last 4 chars only)
-    return {
-        "llm": {
-            "default_provider": "anthropic",
-            "providers": {
-                "anthropic": {"enabled": False, "model": "claude-sonnet-4-5-20250929", "has_key": False},
-                "openai": {"enabled": False, "model": "gpt-4o", "has_key": False},
-                "ollama": {"enabled": False, "base_url": "http://localhost:11434", "model": "llama3.1:70b"},
-            },
-        },
-        "mcp": {
-            "perplexity": {"enabled": False, "has_key": False},
-            "google_search": {"enabled": False, "has_key": False},
-        },
-        "apis": {
-            "semantic_scholar": {"has_key": False},
-            "arxiv": {"enabled": True},
-            "crossref": {"enabled": True},
-        },
-        "agents": {
-            "framework": "langgraph",
-        },
-    }
+    settings = load_settings()
+    logger.debug("Settings loaded for request {}", request_id)
+    return settings_to_api_response(settings)
 
 
 @router.put("")
 async def update_settings(
+    payload: SettingsUpdateRequest = Body(...),
     request_id: str = Depends(get_request_id),
 ) -> dict:
     """Update application settings.
@@ -55,32 +52,36 @@ async def update_settings(
     Accepts a partial settings object and merges with existing configuration.
     API keys are encrypted before storage.
     """
-    # TODO: Parse settings update body
-    # TODO: Encrypt any API keys via security module
-    # TODO: Write updated config to ~/.scriptum/config.yaml
-    return {
-        "message": "Settings updated successfully.",
-    }
+    current = load_settings()
+    updates = payload.model_dump(exclude_unset=True)
+
+    _merge_updates(current, updates)
+
+    save_settings(current)
+    # Bust the cached singleton so subsequent reads pick up changes
+    get_settings.cache_clear()
+
+    logger.info("Settings updated (request {})", request_id)
+    return {"message": "Settings updated successfully."}
 
 
-@router.post("/test-connection")
+@router.post("/test-connection", response_model=TestConnectionResponse)
 async def test_connection(
+    payload: TestConnectionRequest,
     request_id: str = Depends(get_request_id),
-) -> dict:
-    """Test a connection to an LLM provider or external API.
+) -> TestConnectionResponse:
+    """Test a connection to an LLM provider.
 
-    Accepts {provider, model, api_key} and sends a test message.
-    Returns success status, latency, and model info.
+    Sends a lightweight test prompt and reports latency.
+    Full implementation arrives in Phase 2 (Step 2.3) once LiteLLM is wired in.
     """
-    # TODO: Parse test request (provider, model, api_key)
-    # TODO: Send test prompt via LiteLLM
-    # TODO: Measure latency and return result
-    return {
-        "success": False,
-        "latency_ms": None,
-        "model_info": None,
-        "error": "Not yet implemented. Configure in Step 2.3.",
-    }
+    # TODO: Send test prompt via LiteLLM (Phase 2, Step 2.3)
+    return TestConnectionResponse(
+        success=False,
+        latency_ms=None,
+        model_info=None,
+        error="Not yet implemented. Configure in Step 2.3.",
+    )
 
 
 @router.get("/ollama/models")
@@ -92,9 +93,32 @@ async def get_ollama_models(
     Queries the Ollama API at the configured base_url and returns
     all locally available models.
     """
-    # TODO: Query Ollama REST API at configured base_url/api/tags
-    # TODO: Return list of model names and sizes
+    # TODO: Query Ollama REST API at configured base_url/api/tags (Phase 2)
     return {
         "models": [],
         "error": "Not yet implemented. Configure in Step 2.3.",
     }
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _merge_updates(current: Any, updates: dict) -> None:
+    """Recursively merge *updates* into the *current* Pydantic model."""
+    for key, value in updates.items():
+        if not hasattr(current, key):
+            continue
+        current_val = getattr(current, key)
+        if isinstance(value, dict) and isinstance(current_val, dict):
+            # Dict of sub-models (e.g. providers)
+            for sub_key, sub_value in value.items():
+                if sub_key in current_val and isinstance(sub_value, dict):
+                    _merge_updates(current_val[sub_key], sub_value)
+                else:
+                    current_val[sub_key] = sub_value
+        elif isinstance(value, dict) and hasattr(current_val, "__fields__"):
+            _merge_updates(current_val, value)
+        else:
+            setattr(current, key, value)
