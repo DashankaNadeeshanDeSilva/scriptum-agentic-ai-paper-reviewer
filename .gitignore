@@ -220,3 +220,6 @@ out/
 # Project Documentation (keep local only)
 Docs/
 AGENTS.md
+
+# Claude Code (skills, settings, plans — local only)
+.claude/
