@@ -1,52 +1,81 @@
+# SCRIPTUM Docker Compose — Full Development Stack
+# Usage: docker compose -f docker/docker-compose.yml up --build
+
 services:
+  # ── Backend (FastAPI) ──────────────────────────────────────────────
   backend:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://scriptum:scriptum@db/scriptum
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-scriptum}:${POSTGRES_PASSWORD:-scriptum}@db:5432/${POSTGRES_DB:-scriptum}
       - GROBID_URL=http://grobid:8070
+      - CHROMADB_URL=http://chromadb:8000
     depends_on:
-      - db
-      - grobid
+      db:
+        condition: service_healthy
+      grobid:
+        condition: service_started
+      chromadb:
+        condition: service_started
     volumes:
       - scriptum_config:/root/.scriptum
+    restart: unless-stopped
 
+  # ── Frontend (Next.js) ─────────────────────────────────────────────
   frontend:
     build:
       context: ..
       dockerfile: docker/Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
     ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
+  # ── PostgreSQL ─────────────────────────────────────────────────────
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=scriptum
-      - POSTGRES_USER=scriptum
-      - POSTGRES_PASSWORD=scriptum
+      POSTGRES_DB: ${POSTGRES_DB:-scriptum}
+      POSTGRES_USER: ${POSTGRES_USER:-scriptum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scriptum}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scriptum} -d ${POSTGRES_DB:-scriptum}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
 
+  # ── GROBID (PDF parsing) ───────────────────────────────────────────
   grobid:
     image: lfoppiano/grobid:0.8.0
     ports:
-      - "8070:8070"
+      - "${GROBID_PORT:-8070}:8070"
+    restart: unless-stopped
 
+  # ── ChromaDB (vector store) ────────────────────────────────────────
   chromadb:
     image: chromadb/chroma:latest
     ports:
-      - "8001:8000"
+      - "${CHROMADB_PORT:-8001}:8000"
     volumes:
       - chroma_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=False
+    restart: unless-stopped
 
 volumes:
   postgres_data:
