@@ -17,7 +17,7 @@ An open-source, agentic AI system that simulates the academic peer review proces
 ```
 Frontend (Next.js) <-> Backend (FastAPI) <-> Agents (LangGraph)
                             |
-      ChromaDB + PostgreSQL + GROBID + External APIs
+      ChromaDB + PostgreSQL + Docling + External APIs
 ```
 
 ## Quick Start

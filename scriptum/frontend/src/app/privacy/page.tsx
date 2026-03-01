@@ -39,7 +39,7 @@ const sections = [
     icon: Lock,
     title: "Paper Confidentiality",
     content:
-      "Your manuscripts are processed locally using GROBID for PDF parsing. When using cloud LLM providers (Anthropic, OpenAI), paper content is sent to their APIs for review generation. When using Ollama, all processing happens entirely on your machine. We recommend reviewing your chosen provider's data handling policies.",
+      "Your manuscripts are processed locally using Docling for document parsing. No external service is required — all document analysis runs in-process within the Python backend. When using cloud LLM providers (Anthropic, OpenAI), paper content is sent to their APIs for review generation. When using Ollama, all processing happens entirely on your machine. We recommend reviewing your chosen provider's data handling policies.",
   },
   {
     id: "providers",
