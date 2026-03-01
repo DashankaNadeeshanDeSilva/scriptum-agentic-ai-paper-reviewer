@@ -12,12 +12,25 @@ An open-source, agentic AI system that simulates the academic peer review proces
 - **Evidence-Grounded**: Every critique includes citations and paper section references
 - **Privacy-First**: Full local deployment with Ollama
 
+## Document Processing
+
+SCRIPTUM uses [Docling](https://github.com/docling-project/docling) (IBM, MIT license) for deep document analysis. Every uploaded paper is automatically processed to extract:
+
+- **Sections & headings** — full hierarchical structure with page locations
+- **Tables** — cell-level extraction with 97.9% accuracy (TableFormer)
+- **Figures** — captions and page references
+- **Equations** — LaTeX representation with surrounding context
+- **References** — raw bibliography entries (structured enrichment via LLM in Phase 3)
+- **OCR** — scanned PDF support via built-in OCR engine
+
+All processing runs **in-process** within the Python backend — no external services or Java runtime required. Supports PDF and LaTeX input formats. See [Document Processing Guide](Docs/DOCUMENT-PROCESSING.md) for details.
+
 ## Architecture
 
 ```
 Frontend (Next.js) <-> Backend (FastAPI) <-> Agents (LangGraph)
                             |
-      ChromaDB + PostgreSQL + GROBID + External APIs
+      ChromaDB + PostgreSQL + Docling + External APIs
 ```
 
 ## Quick Start

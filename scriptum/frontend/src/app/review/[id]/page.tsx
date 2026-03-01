@@ -53,7 +53,7 @@ const mockSteps: ReviewStep[] = [
   {
     label: "Document Processing",
     status: "complete",
-    detail: "PDF parsed via GROBID in 4.2 s",
+    detail: "Document parsed via Docling in 3.8 s",
   },
   {
     label: "Meta Reviewer Initialization",

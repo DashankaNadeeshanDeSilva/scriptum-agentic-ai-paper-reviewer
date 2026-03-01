@@ -102,6 +102,16 @@ class AgentsConfig(BaseModel):
     timeout: int = 300
 
 
+class DocumentConfig(BaseModel):
+    """Top-level ``document`` section for Docling settings."""
+
+    device: str = "auto"
+    ocr_enabled: bool = True
+    table_mode: str = "accurate"
+    thread_count: int = 4
+    max_file_size_mb: int = 100
+
+
 class AppSettings(BaseModel):
     """Full application settings tree."""
 
@@ -109,6 +119,7 @@ class AppSettings(BaseModel):
     mcp: MCPConfig = Field(default_factory=MCPConfig)
     apis: APIsConfig = Field(default_factory=APIsConfig)
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
+    document: DocumentConfig = Field(default_factory=DocumentConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -123,6 +134,8 @@ _ENV_OVERRIDES: dict[str, list[str]] = {
     "GOOGLE_SEARCH_API_KEY": ["mcp", "google_search", "api_key"],
     "GOOGLE_SEARCH_CX": ["mcp", "google_search", "cx"],
     "SEMANTIC_SCHOLAR_API_KEY": ["apis", "semantic_scholar", "api_key"],
+    "DOCLING_DEVICE": ["document", "device"],
+    "DOCLING_THREADS": ["document", "thread_count"],
 }
 
 # Keys in the YAML that hold secrets and should be encrypted on disk

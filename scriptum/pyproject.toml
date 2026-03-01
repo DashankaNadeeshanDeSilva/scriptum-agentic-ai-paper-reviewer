@@ -49,9 +49,9 @@ dependencies = [
     # Vector Store & Embeddings
     "chromadb>=0.4.22",
 
-    # Document Processing
-    "pymupdf>=1.23.0",
-    "requests>=2.31.0",
+    # Document Processing (Docling - IBM)
+    "docling>=2.75.0",
+    "docling-core>=2.20.0",
 
     # Research APIs
     "arxiv>=2.1.0",
@@ -82,7 +82,6 @@ dev = [
 
     # Type Stubs
     "types-pyyaml>=6.0.12",
-    "types-requests>=2.31.0",
 ]
 
 [project.scripts]
@@ -129,7 +128,8 @@ module = [
     "litellm.*",
     "chromadb.*",
     "arxiv.*",
-    "fitz.*",
+    "docling.*",
+    "docling_core.*",
 ]
 ignore_missing_imports = true
 
