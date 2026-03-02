@@ -1,0 +1,52 @@
+name: "AAAI Conference on Artificial Intelligence"
+scope: >
+  Premier venue for artificial intelligence research covering knowledge
+  representation, machine learning, NLP, computer vision, robotics,
+  multiagent systems, planning, search, and AI ethics and safety.
+review_criteria:
+  technical_quality:
+    weight: 0.30
+    description: >
+      Correctness of claims, soundness of proofs or experiments,
+      proper baselines, and ablation studies where applicable.
+  novelty:
+    weight: 0.25
+    description: >
+      Originality of ideas, algorithms, or applications. Clear
+      articulation of what is new compared to prior work.
+  significance:
+    weight: 0.20
+    description: >
+      Potential impact on the AI community. Practical applications
+      and theoretical contributions are equally valued.
+  clarity:
+    weight: 0.15
+    description: >
+      Quality of presentation. Paper should be well-structured,
+      clearly written, and accessible to the broad AI community.
+  reproducibility:
+    weight: 0.10
+    description: >
+      Sufficient detail to reproduce results. Code and data
+      availability is encouraged but not required.
+formatting_rules:
+  page_limit: 7
+  citation_style: "AAAI"
+  double_blind: true
+  abstract_word_limit: 150
+  required_sections:
+    - Abstract
+    - Introduction
+    - Related Work
+    - Approach
+    - Experiments
+    - Conclusion
+  supplementary_allowed: true
+  extra_pages_for_references: true
+ethics_policy: >
+  Papers must include a broader impact statement. Research involving
+  human subjects requires IRB approval. Dual-use concerns must be
+  explicitly discussed.
+review_timeline:
+  first_decision: "8-10 weeks"
+  revision_period: "N/A (accept/reject for conferences)"

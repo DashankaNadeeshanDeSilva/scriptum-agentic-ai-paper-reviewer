@@ -1,0 +1,51 @@
+name: "Nature"
+scope: >
+  Publishes outstanding research across all fields of science and
+  technology. Papers must report findings of exceptional significance
+  that advance understanding in a broad scientific context.
+review_criteria:
+  scientific_advance:
+    weight: 0.30
+    description: >
+      Degree to which the work advances fundamental understanding.
+      Must represent a substantial leap, not incremental progress.
+  evidence_quality:
+    weight: 0.25
+    description: >
+      Robustness of data, statistical analysis, controls, and
+      reproducibility. Extraordinary claims require extraordinary evidence.
+  broad_interest:
+    weight: 0.20
+    description: >
+      Appeal beyond the specialist community. Findings should be
+      relevant and interesting to scientists in other disciplines.
+  clarity:
+    weight: 0.15
+    description: >
+      Accessible writing style suitable for a multidisciplinary audience.
+      Jargon should be minimized and explained when necessary.
+  methodology:
+    weight: 0.10
+    description: >
+      Appropriateness of methods, sample sizes, and analytical approaches.
+      Methods should be described in sufficient detail for reproduction.
+formatting_rules:
+  page_limit: 8
+  citation_style: "Nature"
+  double_blind: false
+  abstract_word_limit: 150
+  required_sections:
+    - Abstract
+    - Introduction
+    - Results
+    - Discussion
+    - Methods
+  supplementary_allowed: true
+  figure_limit: 6
+ethics_policy: >
+  Mandatory data availability statement. Code must be available for
+  computational studies. Competing interests must be declared. Human
+  and animal research requires ethics committee approval.
+review_timeline:
+  first_decision: "4-8 weeks"
+  revision_period: "3-6 months"
