@@ -209,6 +209,17 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Docker environment (contains credentials)
+scriptum/docker/.env
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+
 # Project Documentation (keep local only)
 Docs/
 AGENTS.md
+
+# Claude Code (skills, settings, plans — local only)
+.claude/

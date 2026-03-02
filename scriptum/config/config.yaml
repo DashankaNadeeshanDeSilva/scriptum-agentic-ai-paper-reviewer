@@ -55,10 +55,13 @@ database:
   url: "sqlite+aiosqlite:///~/.scriptum/scriptum.db"
   # For production: postgresql+asyncpg://user:pass@localhost/scriptum
 
-# Document Processing
+# Document Processing (Docling)
 document:
-  grobid_url: "http://localhost:8070"
-  fallback_enabled: true  # Use PyMuPDF if GROBID unavailable
+  device: "auto"              # auto | cpu | cuda | mps
+  ocr_enabled: true           # Enable OCR for scanned PDFs
+  table_mode: "accurate"      # accurate | fast
+  thread_count: 4             # Parallel processing threads
+  max_file_size_mb: 100       # Max file size to process
 
 # Vector Store (ChromaDB)
 vector_store:
