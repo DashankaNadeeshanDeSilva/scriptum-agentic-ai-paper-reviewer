@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Download,
@@ -9,7 +9,9 @@ import {
   ArrowLeft,
   ThumbsUp,
   ThumbsDown,
-  ChevronDown,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,40 +52,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { api, ApiError } from "@/lib/api/client";
+import { exportReportAsPdf } from "@/lib/pdf-export";
+import type { ReviewReportResponse, FeedbackRequest } from "@/lib/api/types";
 
 /* ------------------------------------------------------------------ */
-/*  Mock report data — replaced by API in Phase 4                     */
+/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
-
-const report = {
-  recommendation: "minor_revision" as const,
-  confidence: "high",
-  strengths: [
-    "Novel application of attention mechanisms to extremely low-resource settings",
-    "Comprehensive ablation study across 8 language families",
-    "Clear and well-structured writing with excellent figures",
-  ],
-  weaknesses: [
-    "Limited comparison with recent adapter-based methods (2024)",
-    "Statistical significance tests not reported for all experiments",
-    "Computational cost analysis is missing",
-  ],
-  scores: [
-    { category: "Novelty", aggregated: 7.8, core: 8.0, adjacent: 7.5, methods: 8.0 },
-    { category: "Methodology", aggregated: 7.2, core: 7.0, adjacent: 7.5, methods: 7.0 },
-    { category: "Significance", aggregated: 7.5, core: 8.0, adjacent: 7.0, methods: 7.5 },
-    { category: "Presentation", aggregated: 8.5, core: 8.5, adjacent: 8.5, methods: 8.5 },
-    { category: "Reproducibility", aggregated: 6.8, core: 7.0, adjacent: 6.5, methods: 7.0 },
-    { category: "Impact", aggregated: 7.0, core: 7.5, adjacent: 6.5, methods: 7.0 },
-  ],
-  improvements: [
-    "Add comparison with LoRA and adapter-tuning baselines from 2024",
-    "Include paired bootstrap significance tests for all language pairs",
-    "Add a section on computational requirements and inference latency",
-    "Discuss limitations of the approach for isolating languages",
-  ],
-};
 
 const recBadge: Record<string, { label: string; className: string }> = {
   accept: { label: "Accept", className: "bg-success/15 text-success border-success/25" },
@@ -93,7 +70,7 @@ const recBadge: Record<string, { label: string; className: string }> = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Page                                                              */
+/*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
 export default function ReportPage({
@@ -102,8 +79,104 @@ export default function ReportPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+
+  // Report data
+  const [data, setData] = useState<ReviewReportResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReport = useCallback(async () => {
+    if (!id?.trim()) {
+      setError("Invalid review ID");
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const resp = await api.get<ReviewReportResponse>(`/reviews/${id}/report`);
+      setData(resp);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.detail : "Failed to load report");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
+
+  // Feedback dialog
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const rec = recBadge[report.recommendation];
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComments, setFeedbackComments] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  async function handleFeedbackSubmit() {
+    setIsSubmittingFeedback(true);
+    setFeedbackError(null);
+    try {
+      const payload: FeedbackRequest = {
+        rating: feedbackRating,
+        comments: feedbackComments || null,
+      };
+      await api.post(`/reviews/${id}/feedback`, payload);
+      setFeedbackSubmitted(true);
+      setFeedbackOpen(false);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.detail : "Failed to submit feedback. Please try again.";
+      setFeedbackError(msg);
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
+        <Skeleton className="h-6 w-32" />
+        <Card>
+          <CardContent className="py-8 space-y-4">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+          </CardContent>
+        </Card>
+        <Skeleton className="h-48" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !data) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error ?? "Report not available"}</span>
+            <Button variant="ghost" size="sm" onClick={fetchReport} className="gap-1">
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const report = data.report;
+  const rec = recBadge[report.recommendation] ?? {
+    label: report.recommendation,
+    className: "",
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -139,7 +212,7 @@ export default function ReportPage({
               Key Strengths
             </h3>
             <ul className="space-y-1.5 text-sm">
-              {report.strengths.map((s, i) => (
+              {report.key_strengths.map((s, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-success" />
                   {s}
@@ -154,7 +227,7 @@ export default function ReportPage({
               Key Weaknesses
             </h3>
             <ul className="space-y-1.5 text-sm">
-              {report.weaknesses.map((w, i) => (
+              {report.key_weaknesses.map((w, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-destructive" />
                   {w}
@@ -176,9 +249,11 @@ export default function ReportPage({
               <TableRow>
                 <TableHead>Category</TableHead>
                 <TableHead className="text-center">Score</TableHead>
-                <TableHead className="text-center">Core</TableHead>
-                <TableHead className="text-center">Adjacent</TableHead>
-                <TableHead className="text-center">Methods</TableHead>
+                {report.individual_reviews.map((r) => (
+                  <TableHead key={r.reviewer_type} className="text-center capitalize">
+                    {r.reviewer_type.replace(/_/g, " ")}
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -189,21 +264,17 @@ export default function ReportPage({
                     <Tooltip>
                       <TooltipTrigger>
                         <span className="font-semibold">
-                          {s.aggregated.toFixed(1)}
+                          {s.score.toFixed(1)}
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent>Aggregated from 3 reviewers</TooltipContent>
+                      <TooltipContent>Aggregated from {report.individual_reviews.length} reviewers</TooltipContent>
                     </Tooltip>
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {s.core.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {s.adjacent.toFixed(1)}
-                  </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {s.methods.toFixed(1)}
-                  </TableCell>
+                  {report.individual_reviews.map((r) => (
+                    <TableCell key={r.reviewer_type} className="text-center text-muted-foreground">
+                      {s.reviewer_scores[r.reviewer_type]?.toFixed(1) ?? "—"}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>
@@ -220,82 +291,132 @@ export default function ReportPage({
         </TabsList>
 
         <TabsContent value="feedback" className="mt-4">
-          <Accordion type="multiple" defaultValue={["methodology"]}>
-            {["Novelty", "Methodology", "Significance", "Presentation"].map(
-              (cat) => (
-                <AccordionItem key={cat} value={cat.toLowerCase()}>
-                  <AccordionTrigger className="text-sm font-medium">
-                    {cat}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground">
-                    Detailed feedback for {cat.toLowerCase()} will be populated
-                    from the API response. This includes specific observations,
-                    cited evidence, and actionable suggestions from each
-                    reviewer.
-                  </AccordionContent>
-                </AccordionItem>
-              )
-            )}
+          <Accordion type="multiple" defaultValue={Object.keys(report.detailed_feedback).slice(0, 1)}>
+            {Object.entries(report.detailed_feedback).map(([category, content]) => (
+              <AccordionItem key={category} value={category}>
+                <AccordionTrigger className="text-sm font-medium capitalize">
+                  {category.replace(/_/g, " ")}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {content}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
           </Accordion>
         </TabsContent>
 
         <TabsContent value="individual" className="mt-4 space-y-4">
-          {["Core Expert", "Adjacent Domain", "Methods Specialist"].map(
-            (reviewer) => (
-              <Card key={reviewer}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">{reviewer}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Full individual review from the {reviewer} will appear here,
-                  including their scores, strengths, weaknesses, and
-                  recommendation.
-                </CardContent>
-              </Card>
-            )
-          )}
+          {report.individual_reviews.map((reviewer) => (
+            <Card key={reviewer.reviewer_type}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm capitalize">
+                  {reviewer.reviewer_type.replace(/_/g, " ")}
+                </CardTitle>
+                <CardDescription>
+                  Recommendation:{" "}
+                  <Badge variant="outline" className="text-xs">
+                    {reviewer.recommendation}
+                  </Badge>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                {reviewer.strengths.length > 0 && (
+                  <div>
+                    <h4 className="mb-1 font-medium text-success">Strengths</h4>
+                    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                      {reviewer.strengths.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {reviewer.weaknesses.length > 0 && (
+                  <div>
+                    <h4 className="mb-1 font-medium text-destructive">Weaknesses</h4>
+                    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                      {reviewer.weaknesses.map((w, i) => (
+                        <li key={i}>{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {Object.entries(reviewer.feedback).length > 0 && (
+                  <div>
+                    <h4 className="mb-1 font-medium">Detailed Feedback</h4>
+                    {Object.entries(reviewer.feedback).map(([cat, text]) => (
+                      <div key={cat} className="mb-2">
+                        <span className="font-medium capitalize">{cat.replace(/_/g, " ")}:</span>
+                        <p className="mt-0.5 text-muted-foreground whitespace-pre-wrap">{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </TabsContent>
 
-        <TabsContent value="evidence" className="mt-4">
-          <Card>
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              Evidence citations and linked sources will be displayed here once
-              the review agents populate them.
-            </CardContent>
-          </Card>
+        <TabsContent value="evidence" className="mt-4 space-y-4">
+          {report.individual_reviews.some((r) => r.evidence.length > 0) ? (
+            report.individual_reviews
+              .filter((r) => r.evidence.length > 0)
+              .map((reviewer) => (
+                <Card key={reviewer.reviewer_type}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm capitalize">
+                      {reviewer.reviewer_type.replace(/_/g, " ")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground">
+                    <ul className="space-y-2">
+                      {reviewer.evidence.map((ev, i) => (
+                        <li key={i} className="rounded border p-2">
+                          <pre className="whitespace-pre-wrap text-xs">
+                            {JSON.stringify(ev, null, 2)}
+                          </pre>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))
+          ) : (
+            <Card>
+              <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                No evidence citations available for this review.
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
       {/* ── Suggested Improvements ── */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-base">Suggested Improvements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="list-decimal space-y-2 pl-5 text-sm">
-            {report.improvements.map((imp, i) => (
-              <li key={i}>{imp}</li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+      {report.suggested_improvements.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-base">Suggested Improvements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal space-y-2 pl-5 text-sm">
+              {report.suggested_improvements.map((imp, i) => (
+                <li key={i}>{imp}</li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Actions ── */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          Export PDF
-        </Button>
-        <Button variant="outline" className="gap-2">
-          <MessageSquare className="h-4 w-4" />
-          Ask Questions
-        </Button>
-
         <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={feedbackSubmitted}
+            >
               <Star className="h-4 w-4" />
-              Submit Feedback
+              {feedbackSubmitted ? "Feedback Submitted" : "Submit Feedback"}
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -307,18 +428,57 @@ export default function ReportPage({
             </DialogHeader>
             <div className="flex justify-center gap-2 py-4">
               {[1, 2, 3, 4, 5].map((n) => (
-                <Button key={n} variant="outline" size="icon">
+                <Button
+                  key={n}
+                  variant={n <= feedbackRating ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setFeedbackRating(n)}
+                >
                   <Star className="h-5 w-5" />
                 </Button>
               ))}
             </div>
+            <textarea
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Optional comments…"
+              value={feedbackComments}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedbackComments(e.target.value)}
+              rows={3}
+            />
+            {feedbackError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{feedbackError}</AlertDescription>
+              </Alert>
+            )}
             <DialogFooter>
-              <Button onClick={() => setFeedbackOpen(false)}>
+              <Button
+                onClick={handleFeedbackSubmit}
+                disabled={feedbackRating === 0 || isSubmittingFeedback}
+                aria-busy={isSubmittingFeedback}
+              >
+                {isSubmittingFeedback && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
                 Submit
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Button variant="outline" className="gap-2" asChild>
+          <Link href={`/review/${id}/chat`}>
+            <MessageSquare className="h-4 w-4" />
+            Chat with Reviewer
+          </Link>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => exportReportAsPdf(report)}
+        >
+          <Download className="h-4 w-4" />
+          Export PDF
+        </Button>
 
         <Button asChild className="ml-auto gap-2">
           <Link href="/upload">Start New Review</Link>

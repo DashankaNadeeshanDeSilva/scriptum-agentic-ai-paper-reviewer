@@ -79,6 +79,9 @@ class Review(Base):
     metric_entries: Mapped[list["Metric"]] = relationship(
         back_populates="review", cascade="all, delete-orphan"
     )
+    chat_messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="review", cascade="all, delete-orphan"
+    )
 
 
 class ReviewerResult(Base):
@@ -152,3 +155,20 @@ class Metric(Base):
 
     # Relationships
     review: Mapped[Review | None] = relationship(back_populates="metric_entries")
+
+
+class ChatMessage(Base):
+    """A chat message between the user and the meta reviewer for a review."""
+
+    __tablename__ = "chat_messages"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=_new_uuid)
+    review_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("reviews.id", ondelete="CASCADE"), nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)  # "user" or "assistant"
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    # Relationships
+    review: Mapped[Review] = relationship(back_populates="chat_messages")

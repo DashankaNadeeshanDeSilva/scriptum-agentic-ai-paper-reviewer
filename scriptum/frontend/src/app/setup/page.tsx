@@ -6,13 +6,14 @@ import {
   BookOpenText,
   Cloud,
   Server,
-  Key,
-  Globe,
   Check,
   ChevronLeft,
   ChevronRight,
   Sparkles,
   Shield,
+  Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSettings } from "@/hooks/use-settings";
+import { DEFAULT_MODELS } from "@/lib/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                              */
@@ -38,14 +41,80 @@ const totalSteps = 5;
 
 export default function SetupPage() {
   const router = useRouter();
+  const { saveSettings, testConnection, isSaving } = useSettings();
+
   const [step, setStep] = useState(0);
   const [llmChoice, setLlmChoice] = useState("cloud");
 
+  // API keys
+  const [anthropicKey, setAnthropicKey] = useState("");
+  const [openaiKey, setOpenaiKey] = useState("");
+  const [ollamaUrl, setOllamaUrl] = useState("http://localhost:11434");
+
+  // Research tools
+  const [perplexityKey, setPerplexityKey] = useState("");
+  const [googleSearchKey, setGoogleSearchKey] = useState("");
+
+  // Test connection state
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
+  const [testMessage, setTestMessage] = useState("");
+
   const progress = ((step + 1) / totalSteps) * 100;
 
-  function handleComplete() {
-    // TODO: POST config to backend in Phase 4
-    router.push("/");
+  async function handleTestConnection() {
+    setTestStatus("testing");
+    setTestMessage("");
+
+    const provider = llmChoice === "cloud" ? "anthropic" : "ollama";
+    const model = llmChoice === "cloud" ? DEFAULT_MODELS.anthropic : DEFAULT_MODELS.ollama;
+    const apiKey = llmChoice === "cloud" ? anthropicKey : null;
+
+    const result = await testConnection({
+      provider,
+      model,
+      api_key: apiKey || null,
+    });
+
+    if (result.success) {
+      setTestStatus("success");
+      setTestMessage("Connection successful");
+    } else {
+      setTestStatus("error");
+      setTestMessage(result.error ?? "Connection failed");
+    }
+  }
+
+  async function handleComplete() {
+    const isCloud = llmChoice === "cloud";
+    const payload = {
+      llm: {
+        default_provider: isCloud ? "anthropic" : "ollama",
+        anthropic: isCloud
+          ? { enabled: true, api_key: anthropicKey, model: DEFAULT_MODELS.anthropic }
+          : { enabled: false },
+        openai: isCloud && openaiKey
+          ? { enabled: true, api_key: openaiKey, model: DEFAULT_MODELS.openai }
+          : { enabled: false },
+        ollama: !isCloud
+          ? { enabled: true, base_url: ollamaUrl, model: DEFAULT_MODELS.ollama }
+          : { enabled: false },
+      },
+      mcp: {
+        perplexity: perplexityKey
+          ? { enabled: true, api_key: perplexityKey }
+          : { enabled: false },
+        google_search: googleSearchKey
+          ? { enabled: true, api_key: googleSearchKey }
+          : { enabled: false },
+      },
+    };
+
+    try {
+      await saveSettings(payload);
+      router.push("/");
+    } catch {
+      // error shown via hook
+    }
   }
 
   return (
@@ -158,7 +227,12 @@ export default function SetupPage() {
               <>
                 <div className="space-y-2">
                   <Label>Anthropic API Key</Label>
-                  <Input type="password" placeholder="sk-ant-..." />
+                  <Input
+                    type="password"
+                    placeholder="sk-ant-..."
+                    value={anthropicKey}
+                    onChange={(e) => setAnthropicKey(e.target.value)}
+                  />
                 </div>
                 <Separator />
                 <div className="space-y-2">
@@ -166,21 +240,53 @@ export default function SetupPage() {
                     OpenAI API Key{" "}
                     <span className="text-muted-foreground">(optional)</span>
                   </Label>
-                  <Input type="password" placeholder="sk-..." />
+                  <Input
+                    type="password"
+                    placeholder="sk-..."
+                    value={openaiKey}
+                    onChange={(e) => setOpenaiKey(e.target.value)}
+                  />
                 </div>
               </>
             ) : (
               <div className="space-y-2">
                 <Label>Ollama Base URL</Label>
-                <Input defaultValue="http://localhost:11434" />
+                <Input
+                  value={ollamaUrl}
+                  onChange={(e) => setOllamaUrl(e.target.value)}
+                />
                 <p className="text-xs text-muted-foreground">
                   Make sure Ollama is running with a model pulled.
                 </p>
               </div>
             )}
-            <Button variant="outline" size="sm">
-              Test Connection
-            </Button>
+
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestConnection}
+                disabled={testStatus === "testing"}
+                aria-busy={testStatus === "testing"}
+              >
+                {testStatus === "testing" && (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                )}
+                Test Connection
+              </Button>
+              {testStatus === "success" && (
+                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  Connected
+                </Badge>
+              )}
+              {testStatus === "error" && (
+                <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                  <XCircle className="mr-1 h-3 w-3" />
+                  {testMessage}
+                </Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -201,14 +307,24 @@ export default function SetupPage() {
                 Perplexity API Key{" "}
                 <span className="text-muted-foreground">(optional)</span>
               </Label>
-              <Input type="password" placeholder="pplx-..." />
+              <Input
+                type="password"
+                placeholder="pplx-..."
+                value={perplexityKey}
+                onChange={(e) => setPerplexityKey(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>
                 Google Search API Key{" "}
                 <span className="text-muted-foreground">(optional)</span>
               </Label>
-              <Input type="password" placeholder="AIza..." />
+              <Input
+                type="password"
+                placeholder="AIza..."
+                value={googleSearchKey}
+                onChange={(e) => setGoogleSearchKey(e.target.value)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -233,19 +349,26 @@ export default function SetupPage() {
               </div>
               <Separator />
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Research Tools</span>
-                <span className="text-sm">Configured in settings</span>
+                <span className="text-muted-foreground">API Key</span>
+                <span className="text-sm">
+                  {llmChoice === "cloud"
+                    ? anthropicKey ? "Configured" : "Not set"
+                    : ollamaUrl}
+                </span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Perplexity</span>
+                <span className="text-sm">{perplexityKey ? "Configured" : "Skipped"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Google Search</span>
+                <span className="text-sm">{googleSearchKey ? "Configured" : "Skipped"}</span>
+              </div>
+              <Separator />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Config Location</span>
                 <code className="font-mono text-xs">~/.scriptum/</code>
               </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="outline" size="sm">
-                Export YAML
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -256,7 +379,7 @@ export default function SetupPage() {
         <Button
           variant="outline"
           onClick={() => setStep((s) => s - 1)}
-          disabled={step === 0}
+          disabled={step === 0 || isSaving}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back
@@ -268,9 +391,13 @@ export default function SetupPage() {
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleComplete} className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Complete Setup
+          <Button onClick={handleComplete} disabled={isSaving} aria-busy={isSaving} className="gap-2">
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {isSaving ? "Saving…" : "Complete Setup"}
           </Button>
         )}
       </div>

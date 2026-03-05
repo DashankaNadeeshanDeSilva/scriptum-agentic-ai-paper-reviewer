@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRef } from "react";
 import {
   Bot,
   Globe,
@@ -12,6 +13,11 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  AlertCircle,
+  RefreshCw,
+  Save,
+  Download,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,9 +41,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSettings } from "@/hooks/use-settings";
+import type { TestConnectionRequest } from "@/lib/api/types";
+import { PROVIDER_MODELS } from "@/lib/constants";
+import { exportSettingsYaml, parseSettingsYaml, downloadYaml } from "@/lib/settings-yaml";
 
 /* ------------------------------------------------------------------ */
-/*  Mock settings — connected to backend API in Phase 4               */
+/*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
 interface ProviderState {
@@ -46,41 +58,8 @@ interface ProviderState {
   showKey: boolean;
   model: string;
   testStatus: "idle" | "testing" | "success" | "error";
+  testMessage?: string;
 }
-
-const defaultProviders: Record<string, ProviderState> = {
-  anthropic: {
-    enabled: true,
-    key: "",
-    showKey: false,
-    model: "claude-opus-4-6",
-    testStatus: "idle",
-  },
-  openai: {
-    enabled: false,
-    key: "",
-    showKey: false,
-    model: "gpt-4-turbo",
-    testStatus: "idle",
-  },
-  ollama: {
-    enabled: false,
-    key: "",
-    showKey: false,
-    model: "llama2",
-    testStatus: "idle",
-  },
-};
-
-const providerModels: Record<string, string[]> = {
-  anthropic: ["claude-opus-4-6", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
-  openai: ["gpt-4-turbo", "gpt-4o", "gpt-4o-mini"],
-  ollama: ["llama2", "llama3.1:70b", "mistral", "codellama"],
-};
-
-/* ------------------------------------------------------------------ */
-/*  Settings tabs                                                     */
-/* ------------------------------------------------------------------ */
 
 const tabs = [
   { value: "llm", label: "LLM", icon: Bot },
@@ -91,28 +70,249 @@ const tabs = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Page                                                              */
+/*  Safe config extraction helpers                                     */
+/* ------------------------------------------------------------------ */
+
+function getString(obj: Record<string, unknown>, key: string, fallback = ""): string {
+  const val = obj[key];
+  return typeof val === "string" ? val : fallback;
+}
+
+function getBool(obj: Record<string, unknown>, key: string, fallback = false): boolean {
+  const val = obj[key];
+  return typeof val === "boolean" ? val : fallback;
+}
+
+function getRecord(obj: Record<string, unknown>, key: string): Record<string, unknown> {
+  const val = obj[key];
+  return typeof val === "object" && val !== null && !Array.isArray(val)
+    ? (val as Record<string, unknown>)
+    : {};
+}
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
 export default function SettingsPage() {
-  const [defaultProvider, setDefaultProvider] = useState("anthropic");
-  const [providers, setProviders] = useState(defaultProviders);
+  const {
+    settings,
+    isLoading,
+    error,
+    isSaving,
+    fetchSettings,
+    saveSettings,
+    testConnection,
+    fetchOllamaModels,
+  } = useSettings();
 
-  const updateProvider = (
-    name: string,
-    update: Partial<ProviderState>
-  ) => {
+  const [defaultProvider, setDefaultProvider] = useState("anthropic");
+  const [providers, setProviders] = useState<Record<string, ProviderState>>({
+    anthropic: { enabled: true, key: "", showKey: false, model: "claude-opus-4-6", testStatus: "idle" },
+    openai: { enabled: false, key: "", showKey: false, model: "gpt-4-turbo", testStatus: "idle" },
+    ollama: { enabled: false, key: "", showKey: false, model: "llama2", testStatus: "idle" },
+  });
+
+  // MCP state
+  const [perplexityEnabled, setPerplexityEnabled] = useState(false);
+  const [perplexityKey, setPerplexityKey] = useState("");
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [googleKey, setGoogleKey] = useState("");
+  const [googleCx, setGoogleCx] = useState("");
+
+  // APIs state
+  const [semanticScholarKey, setSemanticScholarKey] = useState("");
+  const [arxivEnabled, setArxivEnabled] = useState(true);
+  const [crossrefEnabled, setCrossrefEnabled] = useState(true);
+
+  const [ollamaModels, setOllamaModels] = useState<string[]>(PROVIDER_MODELS.ollama);
+  const [isLoadingOllamaModels, setIsLoadingOllamaModels] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // YAML import/export
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
+
+  // Populate state from loaded settings
+  useEffect(() => {
+    if (!settings) return;
+
+    const llm = settings.llm ?? {};
+    const dp = getString(llm, "default_provider", "anthropic");
+    setDefaultProvider(dp);
+
+    // Update provider states from settings
+    setProviders((prev) => {
+      const next = { ...prev };
+      for (const name of Object.keys(next)) {
+        const provConf = getRecord(llm, name);
+        next[name] = {
+          ...next[name],
+          enabled: getBool(provConf, "enabled", next[name].enabled),
+          key: getString(provConf, "api_key"),
+          model: getString(provConf, "model", next[name].model),
+        };
+      }
+      return next;
+    });
+
+    // MCP
+    const mcp = settings.mcp ?? {};
+    const perplexity = getRecord(mcp, "perplexity");
+    setPerplexityEnabled(getBool(perplexity, "enabled", false));
+    setPerplexityKey(getString(perplexity, "api_key"));
+    const google = getRecord(mcp, "google_search");
+    setGoogleEnabled(getBool(google, "enabled", false));
+    setGoogleKey(getString(google, "api_key"));
+    setGoogleCx(getString(google, "cx"));
+
+    // APIs
+    const apis = settings.apis ?? {};
+    setSemanticScholarKey(getString(getRecord(apis, "semantic_scholar"), "api_key"));
+    setArxivEnabled(getBool(getRecord(apis, "arxiv"), "enabled", true));
+    setCrossrefEnabled(getBool(getRecord(apis, "crossref"), "enabled", true));
+  }, [settings]);
+
+  // Fetch Ollama models when Ollama is enabled
+  useEffect(() => {
+    if (providers.ollama.enabled) {
+      setIsLoadingOllamaModels(true);
+      fetchOllamaModels().then((models) => {
+        if (models.length > 0) setOllamaModels(models);
+        setIsLoadingOllamaModels(false);
+      });
+    }
+  }, [providers.ollama.enabled, fetchOllamaModels]);
+
+  const updateProvider = (name: string, update: Partial<ProviderState>) => {
     setProviders((prev) => ({
       ...prev,
       [name]: { ...prev[name], ...update },
     }));
   };
 
+  async function handleTestConnection(name: string) {
+    const prov = providers[name];
+    updateProvider(name, { testStatus: "testing", testMessage: undefined });
+
+    const req: TestConnectionRequest = {
+      provider: name,
+      model: prov.model,
+      api_key: name !== "ollama" ? prov.key || null : null,
+    };
+
+    const result = await testConnection(req);
+    if (result.success) {
+      updateProvider(name, { testStatus: "success", testMessage: undefined });
+    } else {
+      updateProvider(name, { testStatus: "error", testMessage: result.error ?? "Connection failed" });
+    }
+  }
+
+  async function handleSave() {
+    setSaveSuccess(false);
+    const payload = {
+      llm: {
+        default_provider: defaultProvider,
+        anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, model: providers.anthropic.model },
+        openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, model: providers.openai.model },
+        ollama: { enabled: providers.ollama.enabled, model: providers.ollama.model },
+      },
+      mcp: {
+        perplexity: { enabled: perplexityEnabled, api_key: perplexityKey },
+        google_search: { enabled: googleEnabled, api_key: googleKey, cx: googleCx },
+      },
+      apis: {
+        semantic_scholar: { api_key: semanticScholarKey },
+        arxiv: { enabled: arxivEnabled },
+        crossref: { enabled: crossrefEnabled },
+      },
+    };
+    try {
+      await saveSettings(payload);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch {
+      // error is set in the hook
+    }
+  }
+
+  function handleExportYaml() {
+    const payload = {
+      llm: {
+        default_provider: defaultProvider,
+        anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, model: providers.anthropic.model },
+        openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, model: providers.openai.model },
+        ollama: { enabled: providers.ollama.enabled, model: providers.ollama.model },
+      },
+      mcp: {
+        perplexity: { enabled: perplexityEnabled, api_key: perplexityKey },
+        google_search: { enabled: googleEnabled, api_key: googleKey, cx: googleCx },
+      },
+      apis: {
+        semantic_scholar: { api_key: semanticScholarKey },
+        arxiv: { enabled: arxivEnabled },
+        crossref: { enabled: crossrefEnabled },
+      },
+    };
+    const yamlContent = exportSettingsYaml(payload);
+    downloadYaml(yamlContent);
+  }
+
+  async function handleImportYaml(e: React.ChangeEvent<HTMLInputElement>) {
+    setImportError(null);
+    setImportSuccess(false);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const content = await file.text();
+      const parsed = parseSettingsYaml(content);
+      await saveSettings(parsed);
+      await fetchSettings();
+      setImportSuccess(true);
+      setTimeout(() => setImportSuccess(false), 3000);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Failed to import settings");
+    } finally {
+      // Reset file input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
+        <Skeleton className="h-8 w-32" />
+        <div className="flex gap-6">
+          <Skeleton className="h-64 w-44" />
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <h1 className="font-heading mb-6 text-xl font-bold tracking-tight">
         Settings
       </h1>
+
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button variant="ghost" size="sm" onClick={fetchSettings} className="gap-1">
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Tabs defaultValue="llm" className="flex flex-col gap-6 sm:flex-row">
         {/* Sidebar tabs */}
@@ -222,7 +422,10 @@ export default function SettingsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {(providerModels[name] ?? []).map((m) => (
+                        {(name === "ollama" && ollamaModels.length > 0
+                          ? ollamaModels
+                          : PROVIDER_MODELS[name] ?? []
+                        ).map((m) => (
                           <SelectItem key={m} value={m}>
                             {m}
                           </SelectItem>
@@ -235,9 +438,9 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        updateProvider(name, { testStatus: "testing" })
-                      }
+                      onClick={() => handleTestConnection(name)}
+                      disabled={prov.testStatus === "testing"}
+                      aria-busy={prov.testStatus === "testing"}
                     >
                       {prov.testStatus === "testing" ? (
                         <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -259,7 +462,7 @@ export default function SettingsPage() {
                         className="bg-destructive/10 text-destructive border-destructive/20"
                       >
                         <XCircle className="mr-1 h-3 w-3" />
-                        Failed
+                        {prov.testMessage ?? "Failed"}
                       </Badge>
                     )}
                   </div>
@@ -280,11 +483,16 @@ export default function SettingsPage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Enabled</Label>
-                  <Switch />
+                  <Switch checked={perplexityEnabled} onCheckedChange={setPerplexityEnabled} />
                 </div>
                 <div className="space-y-2">
                   <Label>API Key</Label>
-                  <Input type="password" placeholder="pplx-..." />
+                  <Input
+                    type="password"
+                    placeholder="pplx-..."
+                    value={perplexityKey}
+                    onChange={(e) => setPerplexityKey(e.target.value)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -299,15 +507,24 @@ export default function SettingsPage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Enabled</Label>
-                  <Switch />
+                  <Switch checked={googleEnabled} onCheckedChange={setGoogleEnabled} />
                 </div>
                 <div className="space-y-2">
                   <Label>API Key</Label>
-                  <Input type="password" placeholder="AIza..." />
+                  <Input
+                    type="password"
+                    placeholder="AIza..."
+                    value={googleKey}
+                    onChange={(e) => setGoogleKey(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Custom Search Engine ID (CX)</Label>
-                  <Input placeholder="cx-..." />
+                  <Input
+                    placeholder="cx-..."
+                    value={googleCx}
+                    onChange={(e) => setGoogleCx(e.target.value)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -323,7 +540,12 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Input type="password" placeholder="API key (optional)" />
+                <Input
+                  type="password"
+                  placeholder="API key (optional)"
+                  value={semanticScholarKey}
+                  onChange={(e) => setSemanticScholarKey(e.target.value)}
+                />
               </CardContent>
             </Card>
 
@@ -335,7 +557,7 @@ export default function SettingsPage() {
                     Open access preprint repository
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={arxivEnabled} onCheckedChange={setArxivEnabled} />
               </CardContent>
             </Card>
 
@@ -347,7 +569,7 @@ export default function SettingsPage() {
                     DOI resolution and metadata
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={crossrefEnabled} onCheckedChange={setCrossrefEnabled} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -386,14 +608,6 @@ export default function SettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex gap-3">
-                  <Button variant="outline" size="sm">
-                    Export YAML
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Import YAML
-                  </Button>
-                </div>
                 <Separator />
                 <div className="text-sm text-muted-foreground">
                   <p>
@@ -423,13 +637,71 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Import / Export</CardTitle>
+                <CardDescription>
+                  Export your settings as YAML (API keys are masked) or import from a YAML file.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="outline" size="sm" className="gap-2" onClick={handleExportYaml}>
+                    <Download className="h-3.5 w-3.5" />
+                    Export YAML
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import YAML
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".yaml,.yml"
+                    className="hidden"
+                    onChange={handleImportYaml}
+                  />
+                </div>
+                {importSuccess && (
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                    Settings imported successfully
+                  </Badge>
+                )}
+                {importError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{importError}</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </div>
       </Tabs>
 
       {/* Save button */}
-      <div className="mt-8 flex justify-end">
-        <Button>Save Settings</Button>
+      <div className="mt-8 flex items-center justify-end gap-3">
+        {saveSuccess && (
+          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+            <CheckCircle2 className="mr-1 h-3 w-3" />
+            Saved
+          </Badge>
+        )}
+        <Button onClick={handleSave} disabled={isSaving} aria-busy={isSaving} className="gap-2">
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          Save Settings
+        </Button>
       </div>
     </div>
   );
