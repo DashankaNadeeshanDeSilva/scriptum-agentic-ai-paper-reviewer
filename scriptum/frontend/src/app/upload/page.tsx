@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +32,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useFileUpload } from "@/hooks/use-file-upload";
+import { useStartReview } from "@/hooks/use-reviews";
+import { ApiError } from "@/lib/api/client";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -97,17 +103,47 @@ export default function UploadPage() {
   const [customJournal, setCustomJournal] = useState("");
   const [generalDomain, setGeneralDomain] = useState("");
   const [specificArea, setSpecificArea] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const { uploadedFiles, isUploading, error: uploadError, uploadFiles } = useFileUpload();
+  const { startReview, isSubmitting } = useStartReview();
+
+  const fileIds = uploadedFiles.map((f) => f.file_id);
 
   const effectiveJournal = journal === "__custom" ? customJournal : journal;
   const canNext =
-    (step === 0 && pdfFile) ||
+    (step === 0 && pdfFile && !isUploading && fileIds.length > 0) ||
     (step === 1 && effectiveJournal) ||
     (step === 2 && generalDomain && specificArea) ||
     step === 3;
 
-  function handleStart() {
-    // TODO: POST to /api/v1/reviews in Phase 4
-    router.push("/review/r-new");
+  async function handleFileSelect(file: File, type: "pdf" | "latex") {
+    if (type === "pdf") {
+      setPdfFile(file);
+    } else {
+      setLatexFile(file);
+    }
+    try {
+      await uploadFiles([file]);
+    } catch {
+      // error is already set in the hook
+    }
+  }
+
+  async function handleStart() {
+    setSubmitError(null);
+    try {
+      const response = await startReview({
+        file_ids: fileIds,
+        journal_name: effectiveJournal,
+        domain_general: generalDomain,
+        domain_specific: specificArea,
+      });
+      router.push(`/review/${response.review_id}`);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.detail : "Failed to start review";
+      setSubmitError(msg);
+    }
   }
 
   return (
@@ -154,13 +190,21 @@ export default function UploadPage() {
           <CardContent className="space-y-6">
             {/* PDF dropzone */}
             <label className="group flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-8 transition-colors hover:border-primary/50 hover:bg-primary/10">
-              {pdfFile ? (
+              {isUploading && !pdfFile ? (
+                <>
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="font-medium">Uploading…</span>
+                </>
+              ) : pdfFile ? (
                 <>
                   <FileText className="h-8 w-8 text-primary" />
                   <span className="font-medium">{pdfFile.name}</span>
                   <span className="text-sm text-muted-foreground">
                     {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB
                   </span>
+                  {isUploading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
                 </>
               ) : (
                 <>
@@ -177,7 +221,10 @@ export default function UploadPage() {
                 type="file"
                 accept=".pdf"
                 className="hidden"
-                onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileSelect(file, "pdf");
+                }}
               />
             </label>
 
@@ -187,12 +234,15 @@ export default function UploadPage() {
                 <>
                   <FileCode className="h-6 w-6 text-muted-foreground" />
                   <span className="text-sm font-medium">{latexFile.name}</span>
+                  {isUploading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
                 </>
               ) : (
                 <>
                   <FileCode className="h-6 w-6 text-muted-foreground/60" />
                   <span className="text-sm text-muted-foreground">
-                    Optional: Add LaTeX source (.tex, .zip)
+                    Optional: Add LaTeX source (.tex)
                   </span>
                   <Badge variant="secondary" className="text-xs">
                     Recommended for better formatting analysis
@@ -201,11 +251,22 @@ export default function UploadPage() {
               )}
               <input
                 type="file"
-                accept=".tex,.zip"
+                accept=".tex"
                 className="hidden"
-                onChange={(e) => setLatexFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileSelect(file, "latex");
+                }}
               />
             </label>
+
+            {/* Upload error */}
+            {uploadError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       )}
@@ -342,12 +403,20 @@ export default function UploadPage() {
         </Card>
       )}
 
+      {/* Submit error */}
+      {submitError && step === 3 && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{submitError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Navigation buttons */}
       <div className="mt-6 flex items-center justify-between">
         <Button
           variant="outline"
           onClick={() => setStep((s) => s - 1)}
-          disabled={step === 0}
+          disabled={step === 0 || isSubmitting}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back
@@ -359,9 +428,13 @@ export default function UploadPage() {
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleStart} className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Start Review
+          <Button onClick={handleStart} disabled={isSubmitting} className="gap-2">
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {isSubmitting ? "Starting…" : "Start Review"}
           </Button>
         )}
       </div>
