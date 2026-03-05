@@ -1,0 +1,57 @@
+name: "Neural Information Processing Systems (NeurIPS)"
+scope: >
+  Top-tier venue for machine learning, computational neuroscience,
+  optimization, statistics, and their applications. Covers both
+  theoretical foundations and practical advances in neural and
+  statistical learning systems.
+review_criteria:
+  technical_quality:
+    weight: 0.25
+    description: >
+      Mathematical rigor, correctness of proofs, proper experimental
+      methodology with error bars, and statistical significance testing.
+  novelty:
+    weight: 0.25
+    description: >
+      New theoretical results, algorithms, models, or surprising
+      empirical findings. Position relative to concurrent work matters.
+  significance:
+    weight: 0.20
+    description: >
+      Impact on the field. Both theoretical breakthroughs and practical
+      systems contributions are valued. Negative results are welcome
+      if they provide important insights.
+  clarity:
+    weight: 0.15
+    description: >
+      Well-organized writing with clear notation, intuitive explanations,
+      and effective figures. Main contributions should be stated early.
+  reproducibility:
+    weight: 0.15
+    description: >
+      Code availability, detailed hyperparameter settings, compute
+      requirements, and dataset descriptions. NeurIPS reproducibility
+      checklist must be addressed.
+formatting_rules:
+  page_limit: 9
+  citation_style: "NeurIPS"
+  double_blind: true
+  abstract_word_limit: 250
+  required_sections:
+    - Abstract
+    - Introduction
+    - Related Work
+    - Method
+    - Experiments
+    - Conclusion
+    - Broader Impact
+  supplementary_allowed: true
+  extra_pages_for_references: true
+  checklist_required: true
+ethics_policy: >
+  Mandatory broader impact statement. Papers must address potential
+  negative societal impacts. NeurIPS ethics review process may flag
+  papers for additional scrutiny.
+review_timeline:
+  first_decision: "8-10 weeks"
+  revision_period: "N/A (accept/reject for conferences)"

@@ -6,18 +6,22 @@ and preferences. Supports connection testing and Ollama model discovery.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Body, Depends
 from loguru import logger
 
 from backend.api.deps import get_request_id
 from backend.core.config import (
+    LLMProviderConfig,
     get_settings,
     load_settings,
     save_settings,
     settings_to_api_response,
 )
+from backend.core.llm import LLMClient
 from backend.schemas.review import (
     SettingsResponse,
     SettingsUpdateRequest,
@@ -72,16 +76,46 @@ async def test_connection(
 ) -> TestConnectionResponse:
     """Test a connection to an LLM provider.
 
-    Sends a lightweight test prompt and reports latency.
-    Full implementation arrives in Phase 2 (Step 2.3) once LiteLLM is wired in.
+    Creates an ephemeral LLMClient with the supplied credentials and sends
+    a lightweight test prompt. Returns success status and latency.
     """
-    # TODO: Send test prompt via LiteLLM (Phase 2, Step 2.3)
-    return TestConnectionResponse(
-        success=False,
-        latency_ms=None,
-        model_info=None,
-        error="Not yet implemented. Configure in Step 2.3.",
-    )
+    try:
+        client = LLMClient(
+            provider=payload.provider,
+            model=payload.model,
+            api_key=payload.api_key,
+        )
+        start = time.monotonic()
+        response = await client.complete(
+            messages=[{"role": "user", "content": "Say 'ok'"}],
+            max_tokens=5,
+            temperature=0.0,
+        )
+        latency = (time.monotonic() - start) * 1000
+        logger.info(
+            "Connection test succeeded for {} (request {})",
+            payload.provider,
+            request_id,
+        )
+        return TestConnectionResponse(
+            success=True,
+            latency_ms=latency,
+            model_info=response.model,
+            error=None,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Connection test failed for {} (request {}): {}",
+            payload.provider,
+            request_id,
+            exc,
+        )
+        return TestConnectionResponse(
+            success=False,
+            latency_ms=None,
+            model_info=None,
+            error=str(exc),
+        )
 
 
 @router.get("/ollama/models")
@@ -90,14 +124,29 @@ async def get_ollama_models(
 ) -> dict:
     """List available models from a running Ollama instance.
 
-    Queries the Ollama API at the configured base_url and returns
+    Queries the Ollama REST API at the configured base_url for
     all locally available models.
     """
-    # TODO: Query Ollama REST API at configured base_url/api/tags (Phase 2)
-    return {
-        "models": [],
-        "error": "Not yet implemented. Configure in Step 2.3.",
-    }
+    settings = load_settings()
+    ollama_cfg = settings.llm.providers.get("ollama", LLMProviderConfig())
+    base_url = ollama_cfg.base_url
+
+    if not base_url:
+        return {"models": [], "error": "Ollama base_url not configured"}
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{base_url.rstrip('/')}/api/tags")
+            resp.raise_for_status()
+            data = resp.json()
+            models = [m["name"] for m in data.get("models", [])]
+            logger.debug(
+                "Found {} Ollama models (request {})", len(models), request_id
+            )
+            return {"models": models, "error": None}
+    except Exception as exc:
+        logger.warning("Failed to query Ollama models: {}", exc)
+        return {"models": [], "error": str(exc)}
 
 
 # ---------------------------------------------------------------------------
