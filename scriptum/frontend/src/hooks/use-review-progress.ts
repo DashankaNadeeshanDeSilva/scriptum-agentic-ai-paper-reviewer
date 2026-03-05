@@ -104,7 +104,12 @@ export function useReviewProgress(reviewId: string | null) {
     const ws = createReviewWebSocket(
       reviewId,
       handleEvent,
-      () => setError("WebSocket connection error"),
+      (e) => {
+        const msg = e.type === "max_reconnects_exceeded"
+          ? "Connection lost. Please refresh the page."
+          : "WebSocket connection error";
+        setError(msg);
+      },
       () => {
         /* closed */
       },

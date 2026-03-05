@@ -23,6 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useReviews } from "@/hooks/use-reviews";
 import type { ReviewSummary } from "@/lib/api/types";
 
@@ -50,6 +51,9 @@ const statusLabel: Record<string, string> = {
   desk_check: "Desk Check",
   reviewing: "Reviewing",
   aggregating: "Aggregating",
+  completed: "Completed",
+  failed: "Failed",
+  cancelled: "Cancelled",
 };
 
 const ACTIVE_STATUSES = new Set([
@@ -142,12 +146,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : activeReviews.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
-                  <BookOpenText className="h-10 w-10 opacity-40" />
-                  <p>No active reviews. Upload a paper to get started.</p>
-                </CardContent>
-              </Card>
+              <EmptyState icon={BookOpenText} message="No active reviews. Upload a paper to get started." />
             ) : (
               <div className="space-y-3">
                 {activeReviews.map((review) => (
@@ -204,12 +203,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : recentReviews.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
-                  <BookOpenText className="h-10 w-10 opacity-40" />
-                  <p>No completed reviews yet.</p>
-                </CardContent>
-              </Card>
+              <EmptyState icon={BookOpenText} message="No completed reviews yet." />
             ) : (
               <div className="space-y-3">
                 {recentReviews.map((review) => (
@@ -241,7 +235,7 @@ export default function DashboardPage() {
                           </Badge>
                         )}
                         <Badge variant="secondary" className="text-xs">
-                          {review.status === "failed" ? "Failed" : review.status === "cancelled" ? "Cancelled" : "Completed"}
+                          {statusLabel[review.status] ?? review.status}
                         </Badge>
                         {review.status === "completed" && (
                           <Button variant="ghost" size="sm" asChild>

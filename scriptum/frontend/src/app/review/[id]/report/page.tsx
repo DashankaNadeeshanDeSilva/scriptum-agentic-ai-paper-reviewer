@@ -85,6 +85,11 @@ export default function ReportPage({
   const [error, setError] = useState<string | null>(null);
 
   const fetchReport = useCallback(async () => {
+    if (!id?.trim()) {
+      setError("Invalid review ID");
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -107,9 +112,11 @@ export default function ReportPage({
   const [feedbackComments, setFeedbackComments] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   async function handleFeedbackSubmit() {
     setIsSubmittingFeedback(true);
+    setFeedbackError(null);
     try {
       const payload: FeedbackRequest = {
         rating: feedbackRating,
@@ -118,8 +125,9 @@ export default function ReportPage({
       await api.post(`/reviews/${id}/feedback`, payload);
       setFeedbackSubmitted(true);
       setFeedbackOpen(false);
-    } catch {
-      // silently fail, user can retry
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.detail : "Failed to submit feedback. Please try again.";
+      setFeedbackError(msg);
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -436,10 +444,17 @@ export default function ReportPage({
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedbackComments(e.target.value)}
               rows={3}
             />
+            {feedbackError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{feedbackError}</AlertDescription>
+              </Alert>
+            )}
             <DialogFooter>
               <Button
                 onClick={handleFeedbackSubmit}
                 disabled={feedbackRating === 0 || isSubmittingFeedback}
+                aria-busy={isSubmittingFeedback}
               >
                 {isSubmittingFeedback && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
                 Submit

@@ -428,7 +428,7 @@ export default function UploadPage() {
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleStart} disabled={isSubmitting} className="gap-2">
+          <Button onClick={handleStart} disabled={isSubmitting} aria-busy={isSubmitting} className="gap-2">
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

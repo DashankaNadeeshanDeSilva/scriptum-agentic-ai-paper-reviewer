@@ -42,6 +42,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/hooks/use-settings";
 import type { TestConnectionRequest } from "@/lib/api/types";
+import { PROVIDER_MODELS } from "@/lib/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -56,12 +57,6 @@ interface ProviderState {
   testMessage?: string;
 }
 
-const providerModels: Record<string, string[]> = {
-  anthropic: ["claude-opus-4-6", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
-  openai: ["gpt-4-turbo", "gpt-4o", "gpt-4o-mini"],
-  ollama: ["llama2", "llama3.1:70b", "mistral", "codellama"],
-};
-
 const tabs = [
   { value: "llm", label: "LLM", icon: Bot },
   { value: "mcp", label: "MCP", icon: Globe },
@@ -69,6 +64,27 @@ const tabs = [
   { value: "preferences", label: "Preferences", icon: Sliders },
   { value: "advanced", label: "Advanced", icon: Wrench },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Safe config extraction helpers                                     */
+/* ------------------------------------------------------------------ */
+
+function getString(obj: Record<string, unknown>, key: string, fallback = ""): string {
+  const val = obj[key];
+  return typeof val === "string" ? val : fallback;
+}
+
+function getBool(obj: Record<string, unknown>, key: string, fallback = false): boolean {
+  const val = obj[key];
+  return typeof val === "boolean" ? val : fallback;
+}
+
+function getRecord(obj: Record<string, unknown>, key: string): Record<string, unknown> {
+  const val = obj[key];
+  return typeof val === "object" && val !== null && !Array.isArray(val)
+    ? (val as Record<string, unknown>)
+    : {};
+}
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -105,7 +121,8 @@ export default function SettingsPage() {
   const [arxivEnabled, setArxivEnabled] = useState(true);
   const [crossrefEnabled, setCrossrefEnabled] = useState(true);
 
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [ollamaModels, setOllamaModels] = useState<string[]>(PROVIDER_MODELS.ollama);
+  const [isLoadingOllamaModels, setIsLoadingOllamaModels] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Populate state from loaded settings
@@ -113,18 +130,19 @@ export default function SettingsPage() {
     if (!settings) return;
 
     const llm = settings.llm ?? {};
-    if (llm.default_provider) setDefaultProvider(llm.default_provider as string);
+    const dp = getString(llm, "default_provider", "anthropic");
+    setDefaultProvider(dp);
 
     // Update provider states from settings
     setProviders((prev) => {
       const next = { ...prev };
       for (const name of Object.keys(next)) {
-        const provConf = (llm[name] ?? {}) as Record<string, unknown>;
+        const provConf = getRecord(llm, name);
         next[name] = {
           ...next[name],
-          enabled: (provConf.enabled as boolean) ?? next[name].enabled,
-          key: (provConf.api_key as string) ?? "",
-          model: (provConf.model as string) ?? next[name].model,
+          enabled: getBool(provConf, "enabled", next[name].enabled),
+          key: getString(provConf, "api_key"),
+          model: getString(provConf, "model", next[name].model),
         };
       }
       return next;
@@ -132,26 +150,28 @@ export default function SettingsPage() {
 
     // MCP
     const mcp = settings.mcp ?? {};
-    const perplexity = (mcp.perplexity ?? {}) as Record<string, unknown>;
-    setPerplexityEnabled((perplexity.enabled as boolean) ?? false);
-    setPerplexityKey((perplexity.api_key as string) ?? "");
-    const google = (mcp.google_search ?? {}) as Record<string, unknown>;
-    setGoogleEnabled((google.enabled as boolean) ?? false);
-    setGoogleKey((google.api_key as string) ?? "");
-    setGoogleCx((google.cx as string) ?? "");
+    const perplexity = getRecord(mcp, "perplexity");
+    setPerplexityEnabled(getBool(perplexity, "enabled", false));
+    setPerplexityKey(getString(perplexity, "api_key"));
+    const google = getRecord(mcp, "google_search");
+    setGoogleEnabled(getBool(google, "enabled", false));
+    setGoogleKey(getString(google, "api_key"));
+    setGoogleCx(getString(google, "cx"));
 
     // APIs
     const apis = settings.apis ?? {};
-    setSemanticScholarKey(((apis.semantic_scholar ?? {}) as Record<string, unknown>).api_key as string ?? "");
-    setArxivEnabled(((apis.arxiv ?? {}) as Record<string, unknown>).enabled as boolean ?? true);
-    setCrossrefEnabled(((apis.crossref ?? {}) as Record<string, unknown>).enabled as boolean ?? true);
+    setSemanticScholarKey(getString(getRecord(apis, "semantic_scholar"), "api_key"));
+    setArxivEnabled(getBool(getRecord(apis, "arxiv"), "enabled", true));
+    setCrossrefEnabled(getBool(getRecord(apis, "crossref"), "enabled", true));
   }, [settings]);
 
   // Fetch Ollama models when Ollama is enabled
   useEffect(() => {
     if (providers.ollama.enabled) {
+      setIsLoadingOllamaModels(true);
       fetchOllamaModels().then((models) => {
         if (models.length > 0) setOllamaModels(models);
+        setIsLoadingOllamaModels(false);
       });
     }
   }, [providers.ollama.enabled, fetchOllamaModels]);
@@ -353,7 +373,7 @@ export default function SettingsPage() {
                       <SelectContent>
                         {(name === "ollama" && ollamaModels.length > 0
                           ? ollamaModels
-                          : providerModels[name] ?? []
+                          : PROVIDER_MODELS[name] ?? []
                         ).map((m) => (
                           <SelectItem key={m} value={m}>
                             {m}
@@ -369,6 +389,7 @@ export default function SettingsPage() {
                       size="sm"
                       onClick={() => handleTestConnection(name)}
                       disabled={prov.testStatus === "testing"}
+                      aria-busy={prov.testStatus === "testing"}
                     >
                       {prov.testStatus === "testing" ? (
                         <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -577,7 +598,7 @@ export default function SettingsPage() {
             Saved
           </Badge>
         )}
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+        <Button onClick={handleSave} disabled={isSaving} aria-busy={isSaving} className="gap-2">
           {isSaving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

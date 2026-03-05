@@ -51,6 +51,11 @@ export function useReviewStatus(reviewId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
+    if (!reviewId?.trim()) {
+      setError("Invalid review ID");
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {

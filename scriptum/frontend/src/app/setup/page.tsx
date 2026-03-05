@@ -31,6 +31,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSettings } from "@/hooks/use-settings";
+import { DEFAULT_MODELS } from "@/lib/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                              */
@@ -65,7 +66,7 @@ export default function SetupPage() {
     setTestMessage("");
 
     const provider = llmChoice === "cloud" ? "anthropic" : "ollama";
-    const model = llmChoice === "cloud" ? "claude-opus-4-6" : "llama2";
+    const model = llmChoice === "cloud" ? DEFAULT_MODELS.anthropic : DEFAULT_MODELS.ollama;
     const apiKey = llmChoice === "cloud" ? anthropicKey : null;
 
     const result = await testConnection({
@@ -89,13 +90,13 @@ export default function SetupPage() {
       llm: {
         default_provider: isCloud ? "anthropic" : "ollama",
         anthropic: isCloud
-          ? { enabled: true, api_key: anthropicKey, model: "claude-opus-4-6" }
+          ? { enabled: true, api_key: anthropicKey, model: DEFAULT_MODELS.anthropic }
           : { enabled: false },
         openai: isCloud && openaiKey
-          ? { enabled: true, api_key: openaiKey, model: "gpt-4-turbo" }
+          ? { enabled: true, api_key: openaiKey, model: DEFAULT_MODELS.openai }
           : { enabled: false },
         ollama: !isCloud
-          ? { enabled: true, base_url: ollamaUrl, model: "llama2" }
+          ? { enabled: true, base_url: ollamaUrl, model: DEFAULT_MODELS.ollama }
           : { enabled: false },
       },
       mcp: {
@@ -266,6 +267,7 @@ export default function SetupPage() {
                 size="sm"
                 onClick={handleTestConnection}
                 disabled={testStatus === "testing"}
+                aria-busy={testStatus === "testing"}
               >
                 {testStatus === "testing" && (
                   <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -389,7 +391,7 @@ export default function SetupPage() {
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleComplete} disabled={isSaving} className="gap-2">
+          <Button onClick={handleComplete} disabled={isSaving} aria-busy={isSaving} className="gap-2">
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

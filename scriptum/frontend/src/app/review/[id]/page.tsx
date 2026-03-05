@@ -250,6 +250,7 @@ export default function ReviewProgressPage({
                 variant="destructive"
                 onClick={handleCancel}
                 disabled={isCancelling}
+                aria-busy={isCancelling}
               >
                 {isCancelling ? (
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
