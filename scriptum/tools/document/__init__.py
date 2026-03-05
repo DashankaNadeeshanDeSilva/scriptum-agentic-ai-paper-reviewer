@@ -6,7 +6,6 @@ Public API:
     - Reference resolution: resolve_references
 """
 
-from tools.document.latex_parser import parse_latex
 from tools.document.models import (
     DocumentMetadata,
     Equation,
@@ -16,8 +15,17 @@ from tools.document.models import (
     Section,
     Table,
 )
-from tools.document.pdf_parser import parse_pdf
-from tools.document.reference_resolver import resolve_references
+
+# Parser imports are deferred because they pull in docling, which may
+# not be installed in lightweight/test environments.
+try:
+    from tools.document.latex_parser import parse_latex
+    from tools.document.pdf_parser import parse_pdf
+    from tools.document.reference_resolver import resolve_references
+except ImportError:
+    parse_latex = None  # type: ignore[assignment,misc]
+    parse_pdf = None  # type: ignore[assignment,misc]
+    resolve_references = None  # type: ignore[assignment,misc]
 
 __all__ = [
     "DocumentMetadata",
