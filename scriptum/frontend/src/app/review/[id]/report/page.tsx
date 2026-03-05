@@ -55,6 +55,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { api, ApiError } from "@/lib/api/client";
+import { exportReportAsPdf } from "@/lib/pdf-export";
 import type { ReviewReportResponse, FeedbackRequest } from "@/lib/api/types";
 
 /* ------------------------------------------------------------------ */
@@ -462,6 +463,22 @@ export default function ReportPage({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Button variant="outline" className="gap-2" asChild>
+          <Link href={`/review/${id}/chat`}>
+            <MessageSquare className="h-4 w-4" />
+            Chat with Reviewer
+          </Link>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => exportReportAsPdf(report)}
+        >
+          <Download className="h-4 w-4" />
+          Export PDF
+        </Button>
 
         <Button asChild className="ml-auto gap-2">
           <Link href="/upload">Start New Review</Link>

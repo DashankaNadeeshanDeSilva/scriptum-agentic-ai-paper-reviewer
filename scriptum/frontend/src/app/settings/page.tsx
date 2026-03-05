@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import {
   Bot,
   Globe,
@@ -15,6 +16,8 @@ import {
   AlertCircle,
   RefreshCw,
   Save,
+  Download,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/hooks/use-settings";
 import type { TestConnectionRequest } from "@/lib/api/types";
 import { PROVIDER_MODELS } from "@/lib/constants";
+import { exportSettingsYaml, parseSettingsYaml, downloadYaml } from "@/lib/settings-yaml";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -124,6 +128,11 @@ export default function SettingsPage() {
   const [ollamaModels, setOllamaModels] = useState<string[]>(PROVIDER_MODELS.ollama);
   const [isLoadingOllamaModels, setIsLoadingOllamaModels] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // YAML import/export
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
 
   // Populate state from loaded settings
   useEffect(() => {
@@ -226,6 +235,48 @@ export default function SettingsPage() {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch {
       // error is set in the hook
+    }
+  }
+
+  function handleExportYaml() {
+    const payload = {
+      llm: {
+        default_provider: defaultProvider,
+        anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, model: providers.anthropic.model },
+        openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, model: providers.openai.model },
+        ollama: { enabled: providers.ollama.enabled, model: providers.ollama.model },
+      },
+      mcp: {
+        perplexity: { enabled: perplexityEnabled, api_key: perplexityKey },
+        google_search: { enabled: googleEnabled, api_key: googleKey, cx: googleCx },
+      },
+      apis: {
+        semantic_scholar: { api_key: semanticScholarKey },
+        arxiv: { enabled: arxivEnabled },
+        crossref: { enabled: crossrefEnabled },
+      },
+    };
+    const yamlContent = exportSettingsYaml(payload);
+    downloadYaml(yamlContent);
+  }
+
+  async function handleImportYaml(e: React.ChangeEvent<HTMLInputElement>) {
+    setImportError(null);
+    setImportSuccess(false);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const content = await file.text();
+      const parsed = parseSettingsYaml(content);
+      await saveSettings(parsed);
+      await fetchSettings();
+      setImportSuccess(true);
+      setTimeout(() => setImportSuccess(false), 3000);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Failed to import settings");
+    } finally {
+      // Reset file input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -584,6 +635,51 @@ export default function SettingsPage() {
                     <p>SEMANTIC_SCHOLAR_API_KEY</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Import / Export</CardTitle>
+                <CardDescription>
+                  Export your settings as YAML (API keys are masked) or import from a YAML file.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="outline" size="sm" className="gap-2" onClick={handleExportYaml}>
+                    <Download className="h-3.5 w-3.5" />
+                    Export YAML
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import YAML
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".yaml,.yml"
+                    className="hidden"
+                    onChange={handleImportYaml}
+                  />
+                </div>
+                {importSuccess && (
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                    Settings imported successfully
+                  </Badge>
+                )}
+                {importError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{importError}</AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

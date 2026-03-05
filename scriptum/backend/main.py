@@ -12,7 +12,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
-from backend.api.v1 import files, reviews, settings, websocket
+from backend.api.v1 import chat, files, reviews, settings, websocket
 from backend.core.database import close_db, init_db
 from backend.core.logging import generate_request_id, request_id_ctx, setup_logging
 
@@ -85,6 +85,8 @@ app.include_router(reviews.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 app.include_router(files.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/ws")
+app.include_router(chat.router, prefix="/api/v1")
+app.include_router(chat.ws_router, prefix="/ws")
 
 
 @app.get("/health")
