@@ -19,7 +19,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Framework :: FastAPI",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
 ]
 
 dependencies = [
@@ -88,12 +90,16 @@ dev = [
 scriptum = "cli.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/scriptum-ai/scriptum"
-Repository = "https://github.com/scriptum-ai/scriptum"
-Issues = "https://github.com/scriptum-ai/scriptum/issues"
+Homepage = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer"
+Repository = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer"
+Issues = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["backend", "agents", "tools", "cli", "config"]
+
+# Include pre-built frontend static export if it exists
+[tool.hatch.build.targets.wheel.force-include]
+"frontend/out" = "frontend/out"
 
 [tool.ruff]
 target-version = "py311"
