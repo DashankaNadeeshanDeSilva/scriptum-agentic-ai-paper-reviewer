@@ -30,8 +30,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("SCRIPTUM backend starting up")
     await init_db()
     logger.info("Database initialized")
-    # TODO: Initialize LLM clients (Phase 2, Step 2.3)
-    # TODO: Initialize agent manager (Phase 3, Step 3.3)
     yield
     # Shutdown
     logger.info("SCRIPTUM backend shutting down")
