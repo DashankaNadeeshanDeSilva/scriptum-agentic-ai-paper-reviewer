@@ -49,6 +49,7 @@ from backend.schemas.review import (
 # ---------------------------------------------------------------------------
 
 _event_queues: dict[uuid.UUID, asyncio.Queue[ReviewEvent | None]] = {}
+_cancel_events: dict[uuid.UUID, asyncio.Event] = {}
 
 
 def get_event_queue(review_id: uuid.UUID) -> asyncio.Queue[ReviewEvent | None]:
@@ -65,11 +66,46 @@ def get_event_queue(review_id: uuid.UUID) -> asyncio.Queue[ReviewEvent | None]:
 def remove_event_queue(review_id: uuid.UUID) -> None:
     """Remove the event queue for a review (cleanup)."""
     _event_queues.pop(review_id, None)
+    _cancel_events.pop(review_id, None)
+
+
+def request_cancellation(review_id: uuid.UUID) -> None:
+    """Signal that a review pipeline should be cancelled.
+
+    The pipeline checks this flag between stages and aborts gracefully.
+    """
+    event = _cancel_events.get(review_id)
+    if event is not None:
+        event.set()
+        logger.info("Cancellation requested for review={}", review_id)
+
+
+def _get_cancel_event(review_id: uuid.UUID) -> asyncio.Event:
+    """Get or create the cancellation event for a review."""
+    if review_id not in _cancel_events:
+        _cancel_events[review_id] = asyncio.Event()
+    return _cancel_events[review_id]
+
+
+def _is_cancelled(review_id: uuid.UUID) -> bool:
+    """Check whether cancellation has been requested for a review."""
+    event = _cancel_events.get(review_id)
+    return event is not None and event.is_set()
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+
+class _PipelineCancelled(Exception):
+    """Raised internally when a pipeline detects a cancellation request."""
+
+
+def _check_cancelled(review_id: uuid.UUID) -> None:
+    """Raise ``_PipelineCancelled`` if cancellation was requested."""
+    if _is_cancelled(review_id):
+        raise _PipelineCancelled(f"Review {review_id} cancelled")
 
 
 async def _emit(review_id: uuid.UUID, event: ReviewEvent) -> None:
@@ -163,6 +199,9 @@ async def run_review_pipeline(
     journal_config = journal_config or {}
     review_criteria = review_criteria or {}
 
+    # Register a cancellation event for this pipeline run
+    _get_cancel_event(review_id)
+
     try:
         async with async_session_factory() as session:
             await _run_pipeline_stages(
@@ -177,6 +216,17 @@ async def run_review_pipeline(
                 domain_specific=domain_specific,
                 review_criteria=review_criteria,
             )
+    except _PipelineCancelled:
+        logger.info("Pipeline cancelled: review={}", review_id)
+        try:
+            async with async_session_factory() as session:
+                await _update_status(session, review_id, "cancelled")
+        except Exception:
+            logger.exception("Failed to update review status to 'cancelled': review={}", review_id)
+        await _emit(
+            review_id,
+            ReviewEvent(type="error", step="cancelled", message="Review cancelled by user."),
+        )
     except Exception as exc:
         logger.exception("Pipeline failed with unhandled error: review={}", review_id)
         # Attempt to save failure state
@@ -259,6 +309,8 @@ async def _run_pipeline_stages(
     await _metrics.record_stage_timing(session, review_id, "document_processing", (_time.perf_counter() - _stage_start) * 1000)
     await session.commit()
 
+    _check_cancelled(review_id)
+
     # Build ReviewTask for agents
     review_task = ReviewTask(
         paper=parsed_document,
@@ -309,6 +361,8 @@ async def _run_pipeline_stages(
 
     await _metrics.record_stage_timing(session, review_id, "desk_check", (_time.perf_counter() - _stage_start) * 1000)
     await session.commit()
+
+    _check_cancelled(review_id)
 
     # -----------------------------------------------------------------------
     # Stage 3: Gate Check
@@ -408,6 +462,8 @@ async def _run_pipeline_stages(
     await _metrics.record_stage_timing(session, review_id, "reviewing", (_time.perf_counter() - _stage_start) * 1000)
     await session.commit()
 
+    _check_cancelled(review_id)
+
     # -----------------------------------------------------------------------
     # Stage 5: Meta Reviewer Aggregation
     # -----------------------------------------------------------------------
@@ -459,6 +515,8 @@ async def _run_pipeline_stages(
 
     await _metrics.record_stage_timing(session, review_id, "aggregation", (_time.perf_counter() - _stage_start) * 1000)
     await session.commit()
+
+    _check_cancelled(review_id)
 
     # -----------------------------------------------------------------------
     # Stage 6: Report Generation & Persistence
