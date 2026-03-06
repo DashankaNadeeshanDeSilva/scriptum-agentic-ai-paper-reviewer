@@ -10,6 +10,8 @@ Shared task prompts are parameterised with ``{perspective}`` and ``{focus_areas}
 so the same analysis pipeline produces reviewer-type-specific outputs.
 """
 
+from agents.shared_prompts import DEBIASING_INSTRUCTIONS, EVIDENCE_REQUIREMENT, SCORING_RUBRIC
+
 # ---------------------------------------------------------------------------
 # System prompts (one per reviewer type)
 # ---------------------------------------------------------------------------
@@ -31,7 +33,8 @@ Core principles:
 - Score fairly on a 0-10 scale. Reserve 9-10 for genuinely outstanding contributions.
 - Be constructive: identify specific fixable issues, not just flaws.
 - You are INDEPENDENT — do not consider other reviewers' opinions.
-"""
+
+""" + DEBIASING_INSTRUCTIONS + "\n" + EVIDENCE_REQUIREMENT
 
 ADJACENT_EXPERT_SYSTEM = """\
 You are an Adjacent Expert Reviewer for SCRIPTUM, an AI-assisted academic peer review system.
@@ -50,7 +53,8 @@ Core principles:
 - Score fairly on a 0-10 scale. Reserve 9-10 for genuinely outstanding contributions.
 - Be constructive: identify specific fixable issues, not just flaws.
 - You are INDEPENDENT — do not consider other reviewers' opinions.
-"""
+
+""" + DEBIASING_INSTRUCTIONS + "\n" + EVIDENCE_REQUIREMENT
 
 METHODS_SPECIALIST_SYSTEM = """\
 You are a Methods Specialist Reviewer for SCRIPTUM, an AI-assisted academic peer review system.
@@ -69,7 +73,8 @@ Core principles:
 - Score fairly on a 0-10 scale. Reserve 9-10 for genuinely outstanding contributions.
 - Be constructive: identify specific fixable issues, not just flaws.
 - You are INDEPENDENT — do not consider other reviewers' opinions.
-"""
+
+""" + DEBIASING_INSTRUCTIONS + "\n" + EVIDENCE_REQUIREMENT
 
 # ---------------------------------------------------------------------------
 # Shared task prompts (parameterised by reviewer perspective)
@@ -153,12 +158,7 @@ Review criteria (category -> weight):
 
 Your focus areas: {focus_areas}
 
-Score each category on a 0-10 scale:
-- 0-2: Fundamentally flawed
-- 3-4: Major issues, below acceptance threshold
-- 5-6: Acceptable but needs significant improvement
-- 7-8: Good, solid contribution
-- 9-10: Exceptional, among the best in the field
+""" + SCORING_RUBRIC + """
 
 For EACH score, you MUST provide:
 1. A specific justification citing paper sections or research findings

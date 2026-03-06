@@ -28,8 +28,8 @@ _SUPPORTED_TYPES: dict[str, str] = {
 }
 
 
-class DocumentProcessingError(Exception):
-    """Raised when document processing fails."""
+# Re-export from the central exception hierarchy for backward compatibility
+from backend.core.exceptions import DocumentProcessingError  # noqa: F401
 
 
 async def process_document(

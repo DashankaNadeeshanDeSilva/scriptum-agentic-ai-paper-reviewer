@@ -4,6 +4,8 @@ Each prompt that expects structured LLM output specifies a JSON schema.
 Use with ``response_format={"type": "json_object"}`` in the LLM call.
 """
 
+from agents.shared_prompts import DEBIASING_INSTRUCTIONS, SCORING_RUBRIC
+
 # ---------------------------------------------------------------------------
 # Base system prompt
 # ---------------------------------------------------------------------------
@@ -28,7 +30,8 @@ conflicts between reviewers.
 reviewer assessments. During aggregation you synthesize, not override.
 - Be fair: treat all reviewers' inputs with equal initial weight. Only adjust when \
 evidence supports it.
-"""
+
+""" + DEBIASING_INSTRUCTIONS
 
 # ---------------------------------------------------------------------------
 # Desk Check prompts
@@ -139,6 +142,12 @@ Review criteria weights (category -> weight, sum to 1.0):
 
 Conflicts identified:
 {conflicts}
+
+""" + SCORING_RUBRIC + """
+
+**Anti-anchoring instruction**: Evaluate each reviewer's assessment independently \
+before comparing them. Do not let the first reviewer's scores anchor your expectations \
+for subsequent reviewers.
 
 For each conflict, you must resolve it by:
 1. Examining the evidence and reasoning from each reviewer
