@@ -33,8 +33,8 @@ class LLMResponse:
     cost_usd: float | None = None
 
 
-class LLMError(Exception):
-    """Raised when an LLM call fails after all retries."""
+# Re-export from the central exception hierarchy for backward compatibility
+from backend.core.exceptions import LLMError  # noqa: F401
 
 
 # Exceptions worth retrying (transient errors)

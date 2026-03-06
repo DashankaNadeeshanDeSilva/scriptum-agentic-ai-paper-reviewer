@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db, get_request_id
 from backend.api.v1.files import UPLOAD_DIR
+from backend.core.exceptions import ReviewNotFoundError, ReviewStateError
 from backend.models.review import Feedback, File, Review, ReviewerResult
 from backend.schemas.review import (
     FeedbackRequest,
@@ -264,7 +265,7 @@ async def get_review_status(
     review = result.scalar_one_or_none()
 
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found.")
+        raise ReviewNotFoundError(review_id)
 
     # Map status to progress and step
     progress_map = {
@@ -301,16 +302,13 @@ async def get_review_report(
     review = result.scalar_one_or_none()
 
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found.")
+        raise ReviewNotFoundError(review_id)
 
     if review.status != "completed":
-        raise HTTPException(
-            status_code=409,
-            detail=f"Review is not yet complete. Current status: {review.status}",
-        )
+        raise ReviewStateError(f"Review is not yet complete. Current status: {review.status}")
 
     if not review.final_report:
-        raise HTTPException(status_code=404, detail="Report data not found.")
+        raise ReviewNotFoundError("Report data not found.")
 
     return {"review_id": str(review.id), "status": "completed", "report": review.final_report}
 
@@ -327,7 +325,7 @@ async def cancel_review(
     review = result.scalar_one_or_none()
 
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found.")
+        raise ReviewNotFoundError(review_id)
 
     if review.status in ("completed", "failed", "cancelled"):
         # Already terminal — mark as cancelled
@@ -357,12 +355,11 @@ async def submit_feedback(
     review = result.scalar_one_or_none()
 
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found.")
+        raise ReviewNotFoundError(review_id)
 
     if review.status != "completed":
-        raise HTTPException(
-            status_code=409,
-            detail=f"Feedback can only be submitted for completed reviews. Current status: {review.status}",
+        raise ReviewStateError(
+            f"Feedback can only be submitted for completed reviews. Current status: {review.status}"
         )
 
     feedback = Feedback(

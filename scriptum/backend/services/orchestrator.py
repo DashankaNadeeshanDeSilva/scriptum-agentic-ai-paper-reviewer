@@ -23,8 +23,13 @@ from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import time as _time
+
 from agents.core.base import AgentInterface, ReviewResult, ReviewTask
+from backend.core.config import get_settings
 from backend.core.database import async_session_factory
+from backend.core.exceptions import AgentTimeoutError
+from backend.core.metrics import get_metrics_collector
 from backend.models.review import File, Review, ReviewerResult
 from backend.schemas.review import (
     DeskCheckResult,
@@ -210,6 +215,8 @@ async def _run_pipeline_stages(
     review_criteria: dict[str, float],
 ) -> None:
     """Run all 6 pipeline stages sequentially."""
+    _metrics = get_metrics_collector()
+    _pipeline_start = _time.perf_counter()
 
     # -----------------------------------------------------------------------
     # Stage 1: Parse Document
@@ -220,6 +227,7 @@ async def _run_pipeline_stages(
         ReviewEvent(type="progress", step="document_processing", progress=0.0, message="Parsing document..."),
     )
 
+    _stage_start = _time.perf_counter()
     try:
         parsed_document = await _stage_parse_document(session, review_id)
     except Exception as exc:
@@ -248,6 +256,9 @@ async def _run_pipeline_stages(
         ),
     )
 
+    await _metrics.record_stage_timing(session, review_id, "document_processing", (_time.perf_counter() - _stage_start) * 1000)
+    await session.commit()
+
     # Build ReviewTask for agents
     review_task = ReviewTask(
         paper=parsed_document,
@@ -267,6 +278,7 @@ async def _run_pipeline_stages(
         ReviewEvent(type="progress", step="desk_check", agent="meta_reviewer", progress=0.2, message="Running desk check..."),
     )
 
+    _stage_start = _time.perf_counter()
     try:
         desk_check_result = await _stage_desk_check(meta_reviewer, task_dict)
     except Exception as exc:
@@ -294,6 +306,9 @@ async def _run_pipeline_stages(
             result=desk_check_result.model_dump(),
         ),
     )
+
+    await _metrics.record_stage_timing(session, review_id, "desk_check", (_time.perf_counter() - _stage_start) * 1000)
+    await session.commit()
 
     # -----------------------------------------------------------------------
     # Stage 3: Gate Check
@@ -323,6 +338,7 @@ async def _run_pipeline_stages(
         ReviewEvent(type="progress", step="reviewing", progress=0.35, message="Starting independent reviews..."),
     )
 
+    _stage_start = _time.perf_counter()
     reviewer_agents = {
         "core_expert": core_expert,
         "adjacent_expert": adjacent_expert,
@@ -389,6 +405,9 @@ async def _run_pipeline_stages(
         ),
     )
 
+    await _metrics.record_stage_timing(session, review_id, "reviewing", (_time.perf_counter() - _stage_start) * 1000)
+    await session.commit()
+
     # -----------------------------------------------------------------------
     # Stage 5: Meta Reviewer Aggregation
     # -----------------------------------------------------------------------
@@ -404,6 +423,7 @@ async def _run_pipeline_stages(
         ),
     )
 
+    _stage_start = _time.perf_counter()
     try:
         final_report = await _stage_aggregation(
             meta_reviewer=meta_reviewer,
@@ -437,6 +457,9 @@ async def _run_pipeline_stages(
         ),
     )
 
+    await _metrics.record_stage_timing(session, review_id, "aggregation", (_time.perf_counter() - _stage_start) * 1000)
+    await session.commit()
+
     # -----------------------------------------------------------------------
     # Stage 6: Report Generation & Persistence
     # -----------------------------------------------------------------------
@@ -451,9 +474,13 @@ async def _run_pipeline_stages(
         )
     )
     await session.execute(stmt)
+
+    # Record total pipeline duration
+    total_duration_ms = (_time.perf_counter() - _pipeline_start) * 1000
+    await _metrics.record_stage_timing(session, review_id, "total", total_duration_ms)
     await session.commit()
 
-    logger.info("Review pipeline COMPLETED: review={}", review_id)
+    logger.info("Review pipeline COMPLETED: review={} duration_ms={:.0f}", review_id, total_duration_ms)
 
     await _emit(
         review_id,
@@ -550,6 +577,7 @@ async def _stage_parallel_review(
         failed_agents: dict mapping agent_name -> error_message for failures.
     """
     input_data = task_dict
+    timeout_seconds = float(get_settings().agents.timeout)
 
     async def _run_single_reviewer(agent_name: str, agent: AgentInterface) -> ReviewResult | Exception:
         """Execute a single reviewer, returning Exception on failure."""
@@ -564,7 +592,10 @@ async def _stage_parallel_review(
                     message=f"{agent_name} is reviewing...",
                 ),
             )
-            result_dict = await agent.execute(input_data)
+            try:
+                result_dict = await asyncio.wait_for(agent.execute(input_data), timeout=timeout_seconds)
+            except asyncio.TimeoutError:
+                raise AgentTimeoutError(agent_name, timeout_seconds)
             review_result = ReviewResult(
                 reviewer_type=agent_name,
                 scores=result_dict.get("scores", {}),

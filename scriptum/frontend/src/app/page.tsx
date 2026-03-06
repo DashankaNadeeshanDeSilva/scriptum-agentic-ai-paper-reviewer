@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Upload,
@@ -10,6 +11,9 @@ import {
   BookOpenText,
   AlertCircle,
   RefreshCw,
+  DollarSign,
+  Timer,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +29,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useReviews } from "@/hooks/use-reviews";
-import type { ReviewSummary } from "@/lib/api/types";
+import { api } from "@/lib/api/client";
+import type { ReviewSummary, MetricsDashboard } from "@/lib/api/types";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -81,8 +86,23 @@ function formatDate(iso: string | null) {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+function formatDuration(ms: number | null): string {
+  if (ms == null) return "—";
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return `${minutes}m ${remainder}s`;
+}
+
 export default function DashboardPage() {
   const { reviews, total, isLoading, error, refetch } = useReviews(0, 50);
+  const [metrics, setMetrics] = useState<MetricsDashboard | null>(null);
+
+  useEffect(() => {
+    api.get<MetricsDashboard>("/metrics/dashboard").then(setMetrics).catch(() => {});
+  }, []);
 
   const activeReviews = reviews.filter(isActive);
   const recentReviews = reviews.filter((r) => !isActive(r));
@@ -307,6 +327,49 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Metrics */}
+          {metrics && (
+            <>
+              <Separator />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Performance
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                <Card>
+                  <CardContent className="flex items-center gap-2 py-3">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Success Rate</p>
+                      <p className="text-sm font-semibold">{metrics.completion_rate}%</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="flex items-center gap-2 py-3">
+                    <Timer className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Avg Duration</p>
+                      <p className="text-sm font-semibold">
+                        {formatDuration(metrics.avg_review_duration_ms)}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="flex items-center gap-2 py-3">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">LLM Cost</p>
+                      <p className="text-sm font-semibold">
+                        ${metrics.total_llm_cost_usd.toFixed(2)}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
         </aside>
       </div>
     </div>

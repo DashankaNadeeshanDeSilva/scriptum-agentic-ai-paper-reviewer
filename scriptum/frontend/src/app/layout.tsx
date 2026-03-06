@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NavHeader } from "@/components/nav-header";
+import { ErrorBoundary } from "@/components/error-boundary";
 import "./globals.css";
 
 const inter = Inter({
@@ -47,7 +48,9 @@ export default function RootLayout({
           <TooltipProvider>
             <div className="relative flex min-h-screen flex-col">
               <NavHeader />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1">
+                <ErrorBoundary>{children}</ErrorBoundary>
+              </main>
             </div>
             <Toaster />
           </TooltipProvider>
