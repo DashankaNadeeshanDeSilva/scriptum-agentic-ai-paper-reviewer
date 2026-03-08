@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api/client";
 import type { ChatMessage, ChatEvent } from "@/lib/api/types";
 
-const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
-  /^http/,
-  "ws",
-);
+const _apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+const WS_BASE = _apiUrl
+  ? _apiUrl.replace(/^http/, "ws")
+  : `ws://${typeof window !== "undefined" ? window.location.host : "localhost:8000"}`;
 
 interface UseReviewChatReturn {
   messages: ChatMessage[];
