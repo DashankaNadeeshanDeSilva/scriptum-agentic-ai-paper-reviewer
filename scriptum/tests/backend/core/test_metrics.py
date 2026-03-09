@@ -1,8 +1,5 @@
 """Tests for the MetricsCollector service."""
 
-import uuid
-
-import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -45,6 +42,7 @@ class TestMetricsCollector:
         await db.commit()
 
         from sqlalchemy import select
+
         result = await db.execute(select(Metric).where(Metric.metric_name == "test.metric"))
         metric = result.scalar_one()
         assert metric.metric_value == 42.0
@@ -56,6 +54,7 @@ class TestMetricsCollector:
         await db.commit()
 
         from sqlalchemy import select
+
         result = await db.execute(select(Metric).where(Metric.review_id == review_id))
         metric = result.scalar_one()
         assert metric.metric_value == 10.0
@@ -66,6 +65,7 @@ class TestMetricsCollector:
         await db.commit()
 
         from sqlalchemy import select
+
         result = await db.execute(
             select(Metric).where(Metric.metric_name == "stage.desk_check.duration_ms")
         )
@@ -78,6 +78,7 @@ class TestMetricsCollector:
         await db.commit()
 
         from sqlalchemy import select
+
         result = await db.execute(
             select(Metric).where(Metric.metric_name == "agent.core_expert.llm_tokens")
         )
@@ -90,6 +91,7 @@ class TestMetricsCollector:
         await db.commit()
 
         from sqlalchemy import select
+
         result = await db.execute(
             select(Metric).where(Metric.metric_name == "tool.arxiv.usage_count")
         )
@@ -101,6 +103,7 @@ class TestMetricsCollector:
         await db.commit()
 
         from sqlalchemy import select
+
         result = await db.execute(
             select(Metric).where(Metric.metric_name == "tool.arxiv.error_count")
         )
@@ -163,6 +166,7 @@ class TestGetMetricsCollector:
 class TestStageTimer:
     def test_measures_elapsed_time(self):
         import time
+
         with stage_timer() as elapsed:
             time.sleep(0.01)
         assert elapsed() >= 10.0  # at least 10ms

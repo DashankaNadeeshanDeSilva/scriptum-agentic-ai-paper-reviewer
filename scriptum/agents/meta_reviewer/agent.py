@@ -136,9 +136,7 @@ class MetaReviewerAgent(AgentInterface):
                 model=self._config.model,
             )
 
-            self._tools = create_meta_reviewer_tools(
-                self._config.tools_enabled or None
-            )
+            self._tools = create_meta_reviewer_tools(self._config.tools_enabled or None)
 
             self._desk_check_graph = self._build_desk_check_graph()
             self._aggregation_graph = self._build_aggregation_graph()
@@ -171,16 +169,10 @@ class MetaReviewerAgent(AgentInterface):
             return await self.aggregate(input_data)
         raise ValueError(f"Unknown MetaReviewerAgent mode: {mode!r}")
 
-    async def stream(
-        self, input_data: dict[str, Any]
-    ) -> AsyncGenerator[dict[str, Any], None]:
+    async def stream(self, input_data: dict[str, Any]) -> AsyncGenerator[dict[str, Any], None]:
         """Stream progress events from the selected graph."""
         mode = input_data.get("mode", "desk_check")
-        graph = (
-            self._desk_check_graph
-            if mode == "desk_check"
-            else self._aggregation_graph
-        )
+        graph = self._desk_check_graph if mode == "desk_check" else self._aggregation_graph
         if graph is None:
             raise RuntimeError("Agent not initialised — call initialize() first")
 
@@ -212,11 +204,9 @@ class MetaReviewerAgent(AgentInterface):
             )
             self._status = AgentStatusEnum.COMPLETED
             return self._extract_desk_check_result(final)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._status = AgentStatusEnum.FAILED
-            raise RuntimeError(
-                f"Desk check timed out after {self._config.timeout}s"
-            )
+            raise RuntimeError(f"Desk check timed out after {self._config.timeout}s") from None
         except Exception:
             self._status = AgentStatusEnum.FAILED
             raise
@@ -240,11 +230,9 @@ class MetaReviewerAgent(AgentInterface):
             )
             self._status = AgentStatusEnum.COMPLETED
             return self._extract_aggregation_result(final)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._status = AgentStatusEnum.FAILED
-            raise RuntimeError(
-                f"Aggregation timed out after {self._config.timeout}s"
-            )
+            raise RuntimeError(f"Aggregation timed out after {self._config.timeout}s") from None
         except Exception:
             self._status = AgentStatusEnum.FAILED
             raise
@@ -294,9 +282,7 @@ class MetaReviewerAgent(AgentInterface):
     # Desk-check nodes
     # ------------------------------------------------------------------
 
-    async def _research_journal_node(
-        self, state: DeskCheckState
-    ) -> dict[str, Any]:
+    async def _research_journal_node(self, state: DeskCheckState) -> dict[str, Any]:
         """Use RAG + Perplexity + Google to gather journal guidelines."""
         self._status = AgentStatusEnum.RESEARCHING
         journal_name = state.get("context", {}).get("journal_name", "")
@@ -322,14 +308,12 @@ class MetaReviewerAgent(AgentInterface):
             try:
                 results = await perplexity.execute(
                     query=(
-                        f"{journal_name} author guidelines scope formatting "
-                        "requirements submission"
+                        f"{journal_name} author guidelines scope formatting requirements submission"
                     ),
                 )
                 if results:
                     guidelines["perplexity"] = [
-                        {"title": r.title, "url": r.url, "snippet": r.snippet}
-                        for r in results
+                        {"title": r.title, "url": r.url, "snippet": r.snippet} for r in results
                     ]
             except Exception as exc:
                 logger.warning("Perplexity search failed: {}", exc)
@@ -343,8 +327,7 @@ class MetaReviewerAgent(AgentInterface):
                 )
                 if results:
                     guidelines["google"] = [
-                        {"title": r.title, "url": r.url, "snippet": r.snippet}
-                        for r in results
+                        {"title": r.title, "url": r.url, "snippet": r.snippet} for r in results
                     ]
             except Exception as exc:
                 logger.warning("Google search failed: {}", exc)
@@ -363,8 +346,7 @@ class MetaReviewerAgent(AgentInterface):
                         texts,
                         collection="journal_guidelines",
                         metadatas=[
-                            {"journal_name": journal_name, "source": "research"}
-                            for _ in texts
+                            {"journal_name": journal_name, "source": "research"} for _ in texts
                         ],
                     )
             except Exception as exc:
@@ -383,9 +365,7 @@ class MetaReviewerAgent(AgentInterface):
             ],
         }
 
-    async def _check_scope_node(
-        self, state: DeskCheckState
-    ) -> dict[str, Any]:
+    async def _check_scope_node(self, state: DeskCheckState) -> dict[str, Any]:
         """LLM analyses paper scope vs journal scope (JSON output)."""
         self._status = AgentStatusEnum.ANALYZING
         task = state.get("task", {})
@@ -434,9 +414,7 @@ class MetaReviewerAgent(AgentInterface):
             ],
         }
 
-    async def _check_formatting_node(
-        self, state: DeskCheckState
-    ) -> dict[str, Any]:
+    async def _check_formatting_node(self, state: DeskCheckState) -> dict[str, Any]:
         """LLM checks paper formatting vs journal rules (JSON output)."""
         self._status = AgentStatusEnum.EVALUATING
         task = state.get("task", {})
@@ -489,9 +467,7 @@ class MetaReviewerAgent(AgentInterface):
     # Aggregation nodes
     # ------------------------------------------------------------------
 
-    async def _collect_and_analyze_node(
-        self, state: AggregationState
-    ) -> dict[str, Any]:
+    async def _collect_and_analyze_node(self, state: AggregationState) -> dict[str, Any]:
         """Parse reviewer results, identify agreements and conflicts."""
         self._status = AgentStatusEnum.ANALYZING
         reviewer_results = state.get("reviewer_results", [])
@@ -528,9 +504,7 @@ class MetaReviewerAgent(AgentInterface):
             ],
         }
 
-    async def _synthesize_scores_node(
-        self, state: AggregationState
-    ) -> dict[str, Any]:
+    async def _synthesize_scores_node(self, state: AggregationState) -> dict[str, Any]:
         """Compute weighted scores and resolve conflicts."""
         self._status = AgentStatusEnum.EVALUATING
         reviewer_results = state.get("reviewer_results", [])
@@ -581,9 +555,7 @@ class MetaReviewerAgent(AgentInterface):
             ],
         }
 
-    async def _generate_report_node(
-        self, state: AggregationState
-    ) -> dict[str, Any]:
+    async def _generate_report_node(self, state: AggregationState) -> dict[str, Any]:
         """Generate the final aggregated review report."""
         self._status = AgentStatusEnum.GENERATING
         reviewer_results = state.get("reviewer_results", [])
@@ -595,12 +567,8 @@ class MetaReviewerAgent(AgentInterface):
         }
 
         prompt = AGGREGATION_REPORT.format(
-            scores=json.dumps(
-                synthesis.get("weighted_scores", {}), indent=2
-            ),
-            conflict_resolutions=json.dumps(
-                synthesis.get("conflict_resolutions", []), indent=2
-            ),
+            scores=json.dumps(synthesis.get("weighted_scores", {}), indent=2),
+            conflict_resolutions=json.dumps(synthesis.get("conflict_resolutions", []), indent=2),
             reviewer_feedback=json.dumps(reviewer_feedback, indent=2),
         )
 
@@ -650,9 +618,7 @@ class MetaReviewerAgent(AgentInterface):
                 return tool
         return None
 
-    def _prepare_state(
-        self, input_data: dict[str, Any], mode: str
-    ) -> dict[str, Any]:
+    def _prepare_state(self, input_data: dict[str, Any], mode: str) -> dict[str, Any]:
         """Build initial graph state from input and context."""
         if mode == "desk_check":
             return DeskCheckState(
@@ -698,9 +664,7 @@ class MetaReviewerAgent(AgentInterface):
             "issues": issues,
         }
 
-    def _extract_aggregation_result(
-        self, state: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _extract_aggregation_result(self, state: dict[str, Any]) -> dict[str, Any]:
         """Convert final aggregation state to partial ``ReviewReport``-compatible dict."""
         report = state.get("report", {})
         synthesis = state.get("synthesis", {})
@@ -726,9 +690,7 @@ class MetaReviewerAgent(AgentInterface):
             "executive_summary": report.get("executive_summary", ""),
         }
 
-    def _extract_journal_scope(
-        self, guidelines: dict[str, Any], task: dict[str, Any]
-    ) -> str:
+    def _extract_journal_scope(self, guidelines: dict[str, Any], task: dict[str, Any]) -> str:
         """Build a scope description from RAG results + task context."""
         parts: list[str] = []
         # From journal_config in the task

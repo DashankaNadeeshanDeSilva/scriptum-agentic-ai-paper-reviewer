@@ -11,7 +11,7 @@ from uuid import UUID
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
 
-from backend.services.orchestrator import get_event_queue, remove_event_queue
+from backend.services.orchestrator import get_event_queue, remove_event_queue, request_cancellation
 
 router = APIRouter(tags=["websocket"])
 
@@ -96,7 +96,7 @@ async def _listen_client(
                 message = json.loads(data)
                 if message.get("action") == "cancel":
                     logger.info("Cancel requested via WebSocket: review={}", review_id)
-                    # TODO: Implement cancellation support in orchestrator
+                    request_cancellation(review_id)
             except json.JSONDecodeError:
                 pass
     except WebSocketDisconnect:

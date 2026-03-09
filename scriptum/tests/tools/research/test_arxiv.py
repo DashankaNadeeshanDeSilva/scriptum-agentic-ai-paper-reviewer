@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,8 +26,8 @@ def _make_arxiv_result(
     result.pdf_url = pdf_url
     result.categories = categories or ["cs.AI", "cs.CL"]
     result.primary_category = primary_category
-    result.published = datetime(2023, 1, 15, tzinfo=timezone.utc)
-    result.updated = datetime(2023, 2, 1, tzinfo=timezone.utc)
+    result.published = datetime(2023, 1, 15, tzinfo=UTC)
+    result.updated = datetime(2023, 2, 1, tzinfo=UTC)
     result.authors = [MagicMock(name="Alice Smith"), MagicMock(name="Bob Jones")]
     # MagicMock.name is special — override it properly
     result.authors[0].name = "Alice Smith"

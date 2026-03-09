@@ -95,9 +95,9 @@ class MetricsCollector:
         in_progress = (await session.execute(in_progress_stmt)).scalar_one()
 
         # Average review duration (from stage timings)
-        avg_duration_stmt = select(
-            func.avg(Metric.metric_value)
-        ).where(Metric.metric_name == "stage.total.duration_ms")
+        avg_duration_stmt = select(func.avg(Metric.metric_value)).where(
+            Metric.metric_name == "stage.total.duration_ms"
+        )
         avg_duration = (await session.execute(avg_duration_stmt)).scalar_one()
 
         # Total LLM cost
@@ -127,22 +127,26 @@ class MetricsCollector:
 
         grouped: dict[str, list[dict]] = {}
         for m in metrics:
-            grouped.setdefault(m.metric_name, []).append({
-                "value": m.metric_value,
-                "recorded_at": m.recorded_at.isoformat() if m.recorded_at else None,
-            })
+            grouped.setdefault(m.metric_name, []).append(
+                {
+                    "value": m.metric_value,
+                    "recorded_at": m.recorded_at.isoformat() if m.recorded_at else None,
+                }
+            )
 
         return {"review_id": str(review_id), "metrics": grouped}
 
     async def get_cost_summary(self, session: AsyncSession) -> dict[str, Any]:
         """Return LLM cost breakdown."""
-        stmt = select(
-            Metric.metric_name,
-            func.sum(Metric.metric_value).label("total"),
-            func.count(Metric.id).label("count"),
-        ).where(
-            Metric.metric_name.like("agent.%.llm_cost_usd")
-        ).group_by(Metric.metric_name)
+        stmt = (
+            select(
+                Metric.metric_name,
+                func.sum(Metric.metric_value).label("total"),
+                func.count(Metric.id).label("count"),
+            )
+            .where(Metric.metric_name.like("agent.%.llm_cost_usd"))
+            .group_by(Metric.metric_name)
+        )
 
         result = await session.execute(stmt)
         rows = result.all()

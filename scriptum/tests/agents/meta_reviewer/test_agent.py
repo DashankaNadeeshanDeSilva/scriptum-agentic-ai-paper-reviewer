@@ -7,9 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentConfig, AgentStatusEnum
+from agents.core.base import AgentStatusEnum
 from agents.meta_reviewer.agent import MetaReviewerAgent
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -23,97 +22,117 @@ def _make_llm_response(text: str) -> MagicMock:
 
 
 def _scope_ok_json() -> str:
-    return json.dumps({
-        "in_scope": True,
-        "reasoning": "Paper is on Transformer architectures, within NLP scope.",
-        "confidence": 0.9,
-        "scope_match_areas": ["NLP", "deep learning"],
-        "scope_concerns": [],
-    })
+    return json.dumps(
+        {
+            "in_scope": True,
+            "reasoning": "Paper is on Transformer architectures, within NLP scope.",
+            "confidence": 0.9,
+            "scope_match_areas": ["NLP", "deep learning"],
+            "scope_concerns": [],
+        }
+    )
 
 
 def _scope_fail_json() -> str:
-    return json.dumps({
-        "in_scope": False,
-        "reasoning": "Paper is about geology, not NLP.",
-        "confidence": 0.95,
-        "scope_match_areas": [],
-        "scope_concerns": ["Topic is geology, not language processing"],
-    })
+    return json.dumps(
+        {
+            "in_scope": False,
+            "reasoning": "Paper is about geology, not NLP.",
+            "confidence": 0.95,
+            "scope_match_areas": [],
+            "scope_concerns": ["Topic is geology, not language processing"],
+        }
+    )
 
 
 def _formatting_ok_json() -> str:
-    return json.dumps({
-        "passes": True,
-        "issues": [
-            {"rule": "page_limit", "status": "pass", "detail": "11 pages within 14 limit"},
-        ],
-        "confidence": 0.85,
-        "missing_sections": [],
-    })
+    return json.dumps(
+        {
+            "passes": True,
+            "issues": [
+                {"rule": "page_limit", "status": "pass", "detail": "11 pages within 14 limit"},
+            ],
+            "confidence": 0.85,
+            "missing_sections": [],
+        }
+    )
 
 
 def _formatting_fail_json() -> str:
-    return json.dumps({
-        "passes": False,
-        "issues": [
-            {"rule": "page_limit", "status": "fail", "detail": "20 pages exceeds 14 limit"},
-            {"rule": "required_sections", "status": "fail", "detail": "Missing Related Work section"},
-        ],
-        "confidence": 0.8,
-        "missing_sections": ["Related Work"],
-    })
+    return json.dumps(
+        {
+            "passes": False,
+            "issues": [
+                {"rule": "page_limit", "status": "fail", "detail": "20 pages exceeds 14 limit"},
+                {
+                    "rule": "required_sections",
+                    "status": "fail",
+                    "detail": "Missing Related Work section",
+                },
+            ],
+            "confidence": 0.8,
+            "missing_sections": ["Related Work"],
+        }
+    )
 
 
 def _analysis_json() -> str:
-    return json.dumps({
-        "consensus": [{"category": "novelty", "agreed_assessment": "High novelty", "avg_score": 7.5}],
-        "conflicts": [
-            {
-                "category": "reproducibility",
-                "scores": {"core_expert": 6.5, "adjacent_expert": 5.0},
-                "nature": "Disagreement on code availability impact",
-            }
-        ],
-        "unique_insights": [],
-    })
+    return json.dumps(
+        {
+            "consensus": [
+                {"category": "novelty", "agreed_assessment": "High novelty", "avg_score": 7.5}
+            ],
+            "conflicts": [
+                {
+                    "category": "reproducibility",
+                    "scores": {"core_expert": 6.5, "adjacent_expert": 5.0},
+                    "nature": "Disagreement on code availability impact",
+                }
+            ],
+            "unique_insights": [],
+        }
+    )
 
 
 def _synthesis_json() -> str:
-    return json.dumps({
-        "weighted_scores": {
-            "novelty": 7.5,
-            "methodology": 7.3,
-            "significance": 8.2,
-            "presentation": 7.3,
-            "reproducibility": 6.2,
-        },
-        "overall_score": 7.3,
-        "conflict_resolutions": [
-            {
-                "category": "reproducibility",
-                "final_score": 6.2,
-                "resolution_reasoning": "Methods specialist has strongest expertise here.",
-            }
-        ],
-        "recommendation": "accept",
-        "confidence": "high",
-    })
+    return json.dumps(
+        {
+            "weighted_scores": {
+                "novelty": 7.5,
+                "methodology": 7.3,
+                "significance": 8.2,
+                "presentation": 7.3,
+                "reproducibility": 6.2,
+            },
+            "overall_score": 7.3,
+            "conflict_resolutions": [
+                {
+                    "category": "reproducibility",
+                    "final_score": 6.2,
+                    "resolution_reasoning": "Methods specialist has strongest expertise here.",
+                }
+            ],
+            "recommendation": "accept",
+            "confidence": "high",
+        }
+    )
 
 
 def _report_json() -> str:
-    return json.dumps({
-        "recommendation": "accept",
-        "confidence": "high",
-        "key_strengths": ["Novel architecture", "Strong results", "Broad impact"],
-        "key_weaknesses": ["Reproducibility concerns"],
-        "detailed_feedback": {
-            "novelty": "Highly novel attention-only approach.",
-            "methodology": "Sound experimental methodology.",
-        },
-        "suggested_improvements": ["Release code and trained models"],
-        "executive_summary": "Strong paper with novel contributions. Recommend accept.",
-    })
+    return json.dumps(
+        {
+            "recommendation": "accept",
+            "confidence": "high",
+            "key_strengths": ["Novel architecture", "Strong results", "Broad impact"],
+            "key_weaknesses": ["Reproducibility concerns"],
+            "detailed_feedback": {
+                "novelty": "Highly novel attention-only approach.",
+                "methodology": "Sound experimental methodology.",
+            },
+            "suggested_improvements": ["Release code and trained models"],
+            "executive_summary": "Strong paper with novel contributions. Recommend accept.",
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -234,9 +253,9 @@ class TestDeskCheck:
         with llm_p, tools_p:
             await agent.initialize()
             agent.set_context({"journal_name": "Nature"})
-            result = await agent.desk_check({
-                "task": {"paper": sample_paper_dict, "journal_config": sample_journal_config}
-            })
+            result = await agent.desk_check(
+                {"task": {"paper": sample_paper_dict, "journal_config": sample_journal_config}}
+            )
 
         assert result["passed"] is True
         assert result["scope_check"]["in_scope"] is True
@@ -347,9 +366,9 @@ class TestDeskCheck:
         with llm_p, tools_p:
             await agent.initialize()
             agent.set_context({"journal_name": "Nature"})
-            result = await agent.desk_check({
-                "task": {"paper": sample_paper_dict, "journal_config": sample_journal_config}
-            })
+            result = await agent.desk_check(
+                {"task": {"paper": sample_paper_dict, "journal_config": sample_journal_config}}
+            )
 
         # Should still produce a result despite tool failures
         assert "passed" in result
@@ -434,10 +453,12 @@ class TestAggregation:
         )
         with llm_p, tools_p:
             await agent.initialize()
-            result = await agent.aggregate({
-                "reviewer_results": sample_reviewer_results,
-                "review_criteria": sample_review_criteria,
-            })
+            result = await agent.aggregate(
+                {
+                    "reviewer_results": sample_reviewer_results,
+                    "review_criteria": sample_review_criteria,
+                }
+            )
 
         assert result["recommendation"] == "accept"
         assert result["confidence"] == "high"
@@ -465,10 +486,12 @@ class TestAggregation:
         )
         with llm_p, tools_p:
             await agent.initialize()
-            result = await agent.aggregate({
-                "reviewer_results": sample_reviewer_results,
-                "review_criteria": sample_review_criteria,
-            })
+            await agent.aggregate(
+                {
+                    "reviewer_results": sample_reviewer_results,
+                    "review_criteria": sample_review_criteria,
+                }
+            )
 
         # LLM was called 3 times (analyze, synthesize, report)
         assert mock_llm.complete.await_count == 3
@@ -483,22 +506,26 @@ class TestAggregation:
         sample_reviewer_results,
         sample_review_criteria,
     ) -> None:
-        reject_synthesis = json.dumps({
-            "weighted_scores": {"novelty": 3.0, "methodology": 2.5},
-            "overall_score": 2.8,
-            "conflict_resolutions": [],
-            "recommendation": "reject",
-            "confidence": "high",
-        })
-        reject_report = json.dumps({
-            "recommendation": "reject",
-            "confidence": "high",
-            "key_strengths": [],
-            "key_weaknesses": ["Fundamental flaws in methodology"],
-            "detailed_feedback": {"methodology": "Critical errors in analysis"},
-            "suggested_improvements": ["Complete rewrite needed"],
-            "executive_summary": "Paper has fundamental flaws. Reject.",
-        })
+        reject_synthesis = json.dumps(
+            {
+                "weighted_scores": {"novelty": 3.0, "methodology": 2.5},
+                "overall_score": 2.8,
+                "conflict_resolutions": [],
+                "recommendation": "reject",
+                "confidence": "high",
+            }
+        )
+        reject_report = json.dumps(
+            {
+                "recommendation": "reject",
+                "confidence": "high",
+                "key_strengths": [],
+                "key_weaknesses": ["Fundamental flaws in methodology"],
+                "detailed_feedback": {"methodology": "Critical errors in analysis"},
+                "suggested_improvements": ["Complete rewrite needed"],
+                "executive_summary": "Paper has fundamental flaws. Reject.",
+            }
+        )
 
         agent = MetaReviewerAgent(meta_config)
         llm_p, tools_p, _ = _patch_llm_and_tools(
@@ -510,10 +537,12 @@ class TestAggregation:
         )
         with llm_p, tools_p:
             await agent.initialize()
-            result = await agent.aggregate({
-                "reviewer_results": sample_reviewer_results,
-                "review_criteria": sample_review_criteria,
-            })
+            result = await agent.aggregate(
+                {
+                    "reviewer_results": sample_reviewer_results,
+                    "review_criteria": sample_review_criteria,
+                }
+            )
 
         assert result["recommendation"] == "reject"
 
@@ -537,10 +566,12 @@ class TestAggregation:
         )
         with llm_p, tools_p:
             await agent.initialize()
-            result = await agent.aggregate({
-                "reviewer_results": sample_reviewer_results,
-                "review_criteria": sample_review_criteria,
-            })
+            result = await agent.aggregate(
+                {
+                    "reviewer_results": sample_reviewer_results,
+                    "review_criteria": sample_review_criteria,
+                }
+            )
 
         # Should return defaults, not crash
         assert result["recommendation"] == "major_revision"
@@ -564,10 +595,12 @@ class TestAggregation:
         )
         with llm_p, tools_p:
             await agent.initialize()
-            result = await agent.aggregate({
-                "reviewer_results": [],
-                "review_criteria": {},
-            })
+            result = await agent.aggregate(
+                {
+                    "reviewer_results": [],
+                    "review_criteria": {},
+                }
+            )
 
         # Should still produce a result
         assert "recommendation" in result
@@ -599,10 +632,12 @@ class TestExecuteRouting:
         with llm_p, tools_p:
             await agent.initialize()
             agent.set_context({"journal_name": "Nature"})
-            result = await agent.execute({
-                "mode": "desk_check",
-                "task": {"paper": sample_paper_dict},
-            })
+            result = await agent.execute(
+                {
+                    "mode": "desk_check",
+                    "task": {"paper": sample_paper_dict},
+                }
+            )
 
         assert "passed" in result  # desk check output
 
@@ -626,11 +661,13 @@ class TestExecuteRouting:
         )
         with llm_p, tools_p:
             await agent.initialize()
-            result = await agent.execute({
-                "mode": "aggregate",
-                "reviewer_results": sample_reviewer_results,
-                "review_criteria": sample_review_criteria,
-            })
+            result = await agent.execute(
+                {
+                    "mode": "aggregate",
+                    "reviewer_results": sample_reviewer_results,
+                    "review_criteria": sample_review_criteria,
+                }
+            )
 
         assert "recommendation" in result  # aggregation output
 
@@ -684,10 +721,12 @@ class TestStreaming:
             agent.set_context({"journal_name": "Nature"})
 
             events = []
-            async for event in agent.stream({
-                "mode": "desk_check",
-                "task": {"paper": sample_paper_dict},
-            }):
+            async for event in agent.stream(
+                {
+                    "mode": "desk_check",
+                    "task": {"paper": sample_paper_dict},
+                }
+            ):
                 events.append(event)
 
         # 3 nodes = 3 events
@@ -716,11 +755,13 @@ class TestStreaming:
             await agent.initialize()
 
             events = []
-            async for event in agent.stream({
-                "mode": "aggregate",
-                "reviewer_results": sample_reviewer_results,
-                "review_criteria": sample_review_criteria,
-            }):
+            async for event in agent.stream(
+                {
+                    "mode": "aggregate",
+                    "reviewer_results": sample_reviewer_results,
+                    "review_criteria": sample_review_criteria,
+                }
+            ):
                 events.append(event)
 
         assert len(events) == 3

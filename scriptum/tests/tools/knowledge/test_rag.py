@@ -231,7 +231,9 @@ class TestLoadJournalGuidelines:
     @pytest.mark.asyncio
     async def test_metadata_contains_journal_name(self, rag: RAGTool) -> None:
         await load_journal_guidelines(rag)
-        results = await rag.query("neural information processing", collection=JOURNAL_GUIDELINES, k=1)
+        results = await rag.query(
+            "neural information processing", collection=JOURNAL_GUIDELINES, k=1
+        )
         assert len(results) >= 1
         assert "journal_name" in results[0]["metadata"]
 

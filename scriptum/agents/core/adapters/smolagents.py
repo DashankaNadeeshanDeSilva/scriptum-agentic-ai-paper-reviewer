@@ -32,9 +32,7 @@ class SmolAgentsAdapter(AgentInterface):
     async def execute(self, input_data: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError  # pragma: no cover
 
-    async def stream(
-        self, input_data: dict[str, Any]
-    ) -> AsyncGenerator[dict[str, Any], None]:
+    async def stream(self, input_data: dict[str, Any]) -> AsyncGenerator[dict[str, Any], None]:
         raise NotImplementedError  # pragma: no cover
         yield {}  # pragma: no cover
 

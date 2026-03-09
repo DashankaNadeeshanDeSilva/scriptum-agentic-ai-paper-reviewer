@@ -50,16 +50,12 @@ class ArxivTool(ResearchTool):
 
         max_results = min(max_results, 100)
         try:
-            return await asyncio.to_thread(
-                self._sync_search, query, max_results, sort_by
-            )
+            return await asyncio.to_thread(self._sync_search, query, max_results, sort_by)
         except Exception as exc:
             logger.error("arXiv search failed: {}", exc)
             return []
 
-    def _sync_search(
-        self, query: str, max_results: int, sort_by: str
-    ) -> list[SearchResult]:
+    def _sync_search(self, query: str, max_results: int, sort_by: str) -> list[SearchResult]:
         """Synchronous search using the arxiv package."""
         sort_criterion = (
             arxiv.SortCriterion.SubmittedDate
@@ -75,7 +71,11 @@ class ArxivTool(ResearchTool):
 
         results: list[SearchResult] = []
         for paper in client.results(search):
-            arxiv_id = paper.entry_id.split("/abs/")[-1] if "/abs/" in paper.entry_id else paper.entry_id.split("/")[-1]
+            arxiv_id = (
+                paper.entry_id.split("/abs/")[-1]
+                if "/abs/" in paper.entry_id
+                else paper.entry_id.split("/")[-1]
+            )
             results.append(
                 SearchResult(
                     title=paper.title,

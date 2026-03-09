@@ -57,6 +57,7 @@ interface ProviderState {
   key: string;
   showKey: boolean;
   model: string;
+  baseUrl?: string;
   testStatus: "idle" | "testing" | "success" | "error";
   testMessage?: string;
 }
@@ -110,7 +111,7 @@ export default function SettingsPage() {
   const [providers, setProviders] = useState<Record<string, ProviderState>>({
     anthropic: { enabled: true, key: "", showKey: false, model: "claude-opus-4-6", testStatus: "idle" },
     openai: { enabled: false, key: "", showKey: false, model: "gpt-4-turbo", testStatus: "idle" },
-    ollama: { enabled: false, key: "", showKey: false, model: "llama2", testStatus: "idle" },
+    ollama: { enabled: false, key: "", showKey: false, model: "llama2", baseUrl: "http://localhost:11434", testStatus: "idle" },
   });
 
   // MCP state
@@ -142,16 +143,18 @@ export default function SettingsPage() {
     const dp = getString(llm, "default_provider", "anthropic");
     setDefaultProvider(dp);
 
-    // Update provider states from settings
+    // Update provider states from settings (providers are nested under llm.providers)
+    const providersMap = getRecord(llm, "providers");
     setProviders((prev) => {
       const next = { ...prev };
       for (const name of Object.keys(next)) {
-        const provConf = getRecord(llm, name);
+        const provConf = getRecord(providersMap, name);
         next[name] = {
           ...next[name],
           enabled: getBool(provConf, "enabled", next[name].enabled),
-          key: getString(provConf, "api_key"),
+          key: getString(provConf, "masked_key"),
           model: getString(provConf, "model", next[name].model),
+          baseUrl: getString(provConf, "base_url", next[name].baseUrl ?? ""),
         };
       }
       return next;
@@ -215,9 +218,11 @@ export default function SettingsPage() {
     const payload = {
       llm: {
         default_provider: defaultProvider,
-        anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, model: providers.anthropic.model },
-        openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, model: providers.openai.model },
-        ollama: { enabled: providers.ollama.enabled, model: providers.ollama.model },
+        providers: {
+          anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, default_model: providers.anthropic.model },
+          openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, default_model: providers.openai.model },
+          ollama: { enabled: providers.ollama.enabled, default_model: providers.ollama.model, base_url: providers.ollama.baseUrl },
+        },
       },
       mcp: {
         perplexity: { enabled: perplexityEnabled, api_key: perplexityKey },
@@ -242,9 +247,11 @@ export default function SettingsPage() {
     const payload = {
       llm: {
         default_provider: defaultProvider,
-        anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, model: providers.anthropic.model },
-        openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, model: providers.openai.model },
-        ollama: { enabled: providers.ollama.enabled, model: providers.ollama.model },
+        providers: {
+          anthropic: { enabled: providers.anthropic.enabled, api_key: providers.anthropic.key, default_model: providers.anthropic.model },
+          openai: { enabled: providers.openai.enabled, api_key: providers.openai.key, default_model: providers.openai.model },
+          ollama: { enabled: providers.ollama.enabled, default_model: providers.ollama.model, base_url: providers.ollama.baseUrl },
+        },
       },
       mcp: {
         perplexity: { enabled: perplexityEnabled, api_key: perplexityKey },
@@ -406,7 +413,12 @@ export default function SettingsPage() {
                   {name === "ollama" && (
                     <div className="space-y-2">
                       <Label>Base URL</Label>
-                      <Input defaultValue="http://localhost:11434" />
+                      <Input
+                        value={prov.baseUrl ?? "http://localhost:11434"}
+                        onChange={(e) =>
+                          updateProvider(name, { baseUrl: e.target.value })
+                        }
+                      />
                     </div>
                   )}
 

@@ -6,7 +6,7 @@ All LLM calls and external tools are mocked.
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -19,7 +19,6 @@ from agents.core.base import (
     ReviewTask,
     ToolInterface,
 )
-
 
 # =========================================================================
 # Data class tests
@@ -101,9 +100,7 @@ class TestReviewResult:
             reviewer_type="core_expert",
             scores={"novelty": 8.0, "methodology": 7.5},
             feedback={"novelty": "Strong contribution"},
-            evidence=[
-                Evidence(claim="Novel", source="paper:section:1", relevance=0.8)
-            ],
+            evidence=[Evidence(claim="Novel", source="paper:section:1", relevance=0.8)],
             recommendation="minor_revision",
             confidence=0.85,
             strengths=["Clear writing"],
@@ -204,14 +201,10 @@ class TestLangGraphAdapter:
 
     @pytest.mark.asyncio
     @patch("agents.core.adapters.langgraph.LLMClient")
-    async def test_initialize_creates_llm_and_graph(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    async def test_initialize_creates_llm_and_graph(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
-        adapter = LangGraphAdapter(
-            config=AgentConfig(agent_type="core_expert")
-        )
+        adapter = LangGraphAdapter(config=AgentConfig(agent_type="core_expert"))
         assert adapter.get_status() == AgentStatusEnum.IDLE
 
         await adapter.initialize()
@@ -222,14 +215,10 @@ class TestLangGraphAdapter:
 
     @pytest.mark.asyncio
     @patch("agents.core.adapters.langgraph.LLMClient")
-    async def test_execute_runs_graph_and_returns_result(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    async def test_execute_runs_graph_and_returns_result(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
-        adapter = LangGraphAdapter(
-            config=AgentConfig(agent_type="core_expert", timeout=30)
-        )
+        adapter = LangGraphAdapter(config=AgentConfig(agent_type="core_expert", timeout=30))
         await adapter.initialize()
 
         result = await adapter.execute({"paper": {"title": "Test Paper"}})
@@ -244,14 +233,10 @@ class TestLangGraphAdapter:
 
     @pytest.mark.asyncio
     @patch("agents.core.adapters.langgraph.LLMClient")
-    async def test_stream_yields_progress_events(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    async def test_stream_yields_progress_events(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
-        adapter = LangGraphAdapter(
-            config=AgentConfig(agent_type="methods_specialist")
-        )
+        adapter = LangGraphAdapter(config=AgentConfig(agent_type="methods_specialist"))
         await adapter.initialize()
 
         events = []
@@ -267,9 +252,7 @@ class TestLangGraphAdapter:
 
     @pytest.mark.asyncio
     @patch("agents.core.adapters.langgraph.LLMClient")
-    async def test_execute_without_initialize_raises(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    async def test_execute_without_initialize_raises(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
@@ -278,9 +261,7 @@ class TestLangGraphAdapter:
 
     @pytest.mark.asyncio
     @patch("agents.core.adapters.langgraph.LLMClient")
-    async def test_cleanup_resets_state(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    async def test_cleanup_resets_state(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
@@ -300,9 +281,7 @@ class TestLangGraphAdapter:
         assert adapter.get_tools() == []
 
     @patch("agents.core.adapters.langgraph.LLMClient")
-    def test_set_context_stores_context(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    def test_set_context_stores_context(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
@@ -312,9 +291,7 @@ class TestLangGraphAdapter:
 
     @pytest.mark.asyncio
     @patch("agents.core.adapters.langgraph.LLMClient")
-    async def test_initialize_failure_sets_failed_status(
-        self, mock_llm_cls: MagicMock
-    ) -> None:
+    async def test_initialize_failure_sets_failed_status(self, mock_llm_cls: MagicMock) -> None:
         from agents.core.adapters.langgraph import LangGraphAdapter
 
         mock_llm_cls.side_effect = Exception("LLM init failed")
@@ -354,9 +331,7 @@ class TestAgentFactory:
             create_agent()
 
     @patch("agents.core.factory.get_settings")
-    def test_smolagents_raises_not_implemented(
-        self, mock_gs: MagicMock
-    ) -> None:
+    def test_smolagents_raises_not_implemented(self, mock_gs: MagicMock) -> None:
         from agents.core.factory import create_agent
 
         mock_gs.return_value = MagicMock()
@@ -366,9 +341,7 @@ class TestAgentFactory:
             create_agent()
 
     @patch("agents.core.factory.get_settings")
-    def test_unknown_framework_raises_value_error(
-        self, mock_gs: MagicMock
-    ) -> None:
+    def test_unknown_framework_raises_value_error(self, mock_gs: MagicMock) -> None:
         from agents.core.factory import create_agent
 
         mock_gs.return_value = MagicMock()

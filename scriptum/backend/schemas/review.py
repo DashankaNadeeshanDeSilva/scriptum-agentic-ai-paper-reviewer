@@ -10,7 +10,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
 # ---------------------------------------------------------------------------
 # Request Schemas
 # ---------------------------------------------------------------------------
@@ -19,7 +18,9 @@ from pydantic import BaseModel, Field
 class StartReviewRequest(BaseModel):
     """Request body for starting a new review."""
 
-    file_ids: list[UUID] = Field(..., min_length=1, description="IDs of uploaded files (at least one PDF)")
+    file_ids: list[UUID] = Field(
+        ..., min_length=1, description="IDs of uploaded files (at least one PDF)"
+    )
     journal_name: str = Field(..., min_length=1, max_length=255)
     domain_general: str = Field(..., min_length=1, max_length=100)
     domain_specific: str = Field(..., min_length=1, max_length=100)
@@ -55,7 +56,9 @@ class ReviewStatusResponse(BaseModel):
     """Current status and progress of a review."""
 
     review_id: UUID
-    status: str = Field(description="pending | processing | desk_check | reviewing | aggregating | completed | failed | cancelled")
+    status: str = Field(
+        description="pending | processing | desk_check | reviewing | aggregating | completed | failed | cancelled"
+    )
     current_step: str
     progress_percent: float = Field(ge=0.0, le=100.0)
     agent_statuses: dict[str, AgentStatus] = Field(default_factory=dict)
@@ -73,7 +76,9 @@ class DeskCheckResult(BaseModel):
     passed: bool
     scope_check: dict = Field(default_factory=dict)
     formatting_check: dict = Field(default_factory=dict)
-    formatting_confidence: float = Field(ge=0.0, le=1.0, description="0-1, higher with LaTeX source")
+    formatting_confidence: float = Field(
+        ge=0.0, le=1.0, description="0-1, higher with LaTeX source"
+    )
     issues: list[str] = Field(default_factory=list)
 
 

@@ -118,16 +118,20 @@ class BaseReviewer(LangGraphAdapter):
                         query=f"{title} {metadata.get('authors', [''])[0] if metadata.get('authors') else ''}"
                     )
                     for r in results or []:
-                        raw_findings.append({
-                            "source": tool.name,
-                            "title": getattr(r, "title", ""),
-                            "url": getattr(r, "url", ""),
-                            "snippet": getattr(r, "snippet", ""),
-                        })
+                        raw_findings.append(
+                            {
+                                "source": tool.name,
+                                "title": getattr(r, "title", ""),
+                                "url": getattr(r, "url", ""),
+                                "snippet": getattr(r, "snippet", ""),
+                            }
+                        )
                 except Exception as exc:
                     logger.warning(
                         "Tool '{}' failed in {}: {}",
-                        tool.name, self._config.agent_type, exc,
+                        tool.name,
+                        self._config.agent_type,
+                        exc,
                     )
 
         # Ask LLM to synthesise research findings
@@ -295,7 +299,7 @@ class BaseReviewer(LangGraphAdapter):
             weaknesses = result.get("weaknesses", [])
         except (json.JSONDecodeError, Exception) as exc:
             logger.error("Evaluation LLM call failed in {}: {}", self._config.agent_type, exc)
-            scores = {cat: 5.0 for cat in criteria}
+            scores = dict.fromkeys(criteria, 5.0)
             evidence = []
             strengths = []
             weaknesses = [f"Evaluation could not be completed: {exc}"]
@@ -331,7 +335,6 @@ class BaseReviewer(LangGraphAdapter):
 
         feedback: dict[str, str] = {}
         recommendation = "major_revision"
-        confidence = 0.0
 
         try:
             response = await self._llm.complete(
@@ -345,12 +348,10 @@ class BaseReviewer(LangGraphAdapter):
             result = json.loads(response.text)
             feedback = result.get("feedback", {})
             recommendation = result.get("recommendation", "major_revision")
-            confidence = result.get("confidence", 0.0)
+            _ = result.get("confidence", 0.0)
         except (json.JSONDecodeError, Exception) as exc:
-            logger.error(
-                "Feedback generation failed in {}: {}", self._config.agent_type, exc
-            )
-            feedback = {cat: f"Feedback generation failed: {exc}" for cat in scores}
+            logger.error("Feedback generation failed in {}: {}", self._config.agent_type, exc)
+            feedback = dict.fromkeys(scores, f"Feedback generation failed: {exc}")
 
         return {
             "feedback": feedback,

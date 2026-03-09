@@ -48,19 +48,21 @@ class LLMConfig(BaseModel):
     """Top-level ``llm`` section."""
 
     default_provider: str = "anthropic"
-    providers: dict[str, LLMProviderConfig] = Field(default_factory=lambda: {
-        "anthropic": LLMProviderConfig(
-            default_model="claude-opus-4-6",
-            enabled=True,
-        ),
-        "openai": LLMProviderConfig(
-            default_model="gpt-4-turbo",
-        ),
-        "ollama": LLMProviderConfig(
-            base_url="http://localhost:11434",
-            default_model="llama2",
-        ),
-    })
+    providers: dict[str, LLMProviderConfig] = Field(
+        default_factory=lambda: {
+            "anthropic": LLMProviderConfig(
+                default_model="claude-opus-4-6",
+                enabled=True,
+            ),
+            "openai": LLMProviderConfig(
+                default_model="gpt-4-turbo",
+            ),
+            "ollama": LLMProviderConfig(
+                base_url="http://localhost:11434",
+                default_model="llama2",
+            ),
+        }
+    )
 
 
 class MCPToolConfig(BaseModel):

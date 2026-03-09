@@ -93,10 +93,12 @@ async def load_journal_guidelines(rag: RAGTool | None = None) -> int:
             journal_name = data.get("name", path.stem)
 
             texts.append(text)
-            metadatas.append({
-                "journal_name": journal_name,
-                "file": path.name,
-            })
+            metadatas.append(
+                {
+                    "journal_name": journal_name,
+                    "file": path.name,
+                }
+            )
             ids.append(f"journal_{path.stem}")
 
         except Exception:

@@ -34,8 +34,7 @@ class LLMResponse:
 
 
 # Re-export from the central exception hierarchy for backward compatibility
-from backend.core.exceptions import LLMError  # noqa: F401
-
+from backend.core.exceptions import LLMError  # noqa: F401, E402
 
 # Exceptions worth retrying (transient errors)
 _RETRYABLE_EXCEPTIONS = (
@@ -191,9 +190,7 @@ class LLMClient:
                 logger.error("LLM call failed (non-retryable): {}", exc)
                 raise LLMError(str(exc)) from exc
 
-        raise LLMError(
-            f"LLM call failed after {self._max_retries} retries: {last_error}"
-        )
+        raise LLMError(f"LLM call failed after {self._max_retries} retries: {last_error}")
 
     async def stream(
         self,

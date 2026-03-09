@@ -8,8 +8,6 @@ Uses the ``client`` fixture from conftest.py (in-memory SQLite + ASGI client).
 
 import uuid
 
-import pytest
-
 from backend.models.review import Review
 
 

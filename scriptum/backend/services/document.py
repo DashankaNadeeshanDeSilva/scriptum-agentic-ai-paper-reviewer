@@ -29,7 +29,7 @@ _SUPPORTED_TYPES: dict[str, str] = {
 
 
 # Re-export from the central exception hierarchy for backward compatibility
-from backend.core.exceptions import DocumentProcessingError  # noqa: F401
+from backend.core.exceptions import DocumentProcessingError  # noqa: F401, E402
 
 
 async def process_document(

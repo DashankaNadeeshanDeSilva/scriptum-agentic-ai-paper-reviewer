@@ -11,16 +11,15 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
 
 
-class AgentStatusEnum(str, Enum):
+class AgentStatusEnum(StrEnum):
     """Lifecycle status of an agent."""
 
     IDLE = "idle"
@@ -218,9 +217,7 @@ class AgentInterface(ABC):
         ...
 
     @abstractmethod
-    async def stream(
-        self, input_data: dict[str, Any]
-    ) -> AsyncGenerator[dict[str, Any], None]:
+    async def stream(self, input_data: dict[str, Any]) -> AsyncGenerator[dict[str, Any], None]:
         """Stream the agent's execution progress.
 
         Args:

@@ -7,10 +7,11 @@ to access methodological standards and benchmarks.
 
 from __future__ import annotations
 
+from loguru import logger
+
 from agents.core.base import AgentConfig, ToolInterface
 from agents.reviewers.base import BaseReviewer
 from agents.reviewers.prompts import METHODS_SPECIALIST_SYSTEM
-from loguru import logger
 
 
 class MethodsSpecialistAgent(BaseReviewer):
@@ -52,16 +53,19 @@ class MethodsSpecialistAgent(BaseReviewer):
 
         try:
             from tools.research.perplexity import PerplexityTool
+
             tool_factories["perplexity"] = PerplexityTool
         except ImportError:
             pass
         try:
             from tools.research.semantic_scholar import SemanticScholarTool
+
             tool_factories["semantic_scholar"] = SemanticScholarTool
         except ImportError:
             pass
         try:
             from tools.knowledge.rag import RAGTool
+
             tool_factories["rag"] = RAGTool
         except ImportError:
             pass

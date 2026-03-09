@@ -89,15 +89,17 @@ export default function SetupPage() {
     const payload = {
       llm: {
         default_provider: isCloud ? "anthropic" : "ollama",
-        anthropic: isCloud
-          ? { enabled: true, api_key: anthropicKey, model: DEFAULT_MODELS.anthropic }
-          : { enabled: false },
-        openai: isCloud && openaiKey
-          ? { enabled: true, api_key: openaiKey, model: DEFAULT_MODELS.openai }
-          : { enabled: false },
-        ollama: !isCloud
-          ? { enabled: true, base_url: ollamaUrl, model: DEFAULT_MODELS.ollama }
-          : { enabled: false },
+        providers: {
+          anthropic: isCloud
+            ? { enabled: true, api_key: anthropicKey, default_model: DEFAULT_MODELS.anthropic }
+            : { enabled: false },
+          openai: isCloud && openaiKey
+            ? { enabled: true, api_key: openaiKey, default_model: DEFAULT_MODELS.openai }
+            : { enabled: false },
+          ollama: !isCloud
+            ? { enabled: true, base_url: ollamaUrl, default_model: DEFAULT_MODELS.ollama }
+            : { enabled: false },
+        },
       },
       mcp: {
         perplexity: perplexityKey

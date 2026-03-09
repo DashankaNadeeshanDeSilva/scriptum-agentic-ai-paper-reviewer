@@ -52,9 +52,7 @@ class GoogleSearchTool(ResearchTool):
             List of :class:`SearchResult` objects.
         """
         if not self._api_key or not self._cx:
-            logger.warning(
-                "Google Search API key or CX not configured, skipping search"
-            )
+            logger.warning("Google Search API key or CX not configured, skipping search")
             return []
 
         if not query.strip():

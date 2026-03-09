@@ -16,8 +16,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentInterface, Evidence, ReviewResult, ReviewTask
-from backend.schemas.review import DeskCheckResult, ReviewEvent, ReviewReport
+from agents.core.base import AgentInterface, Evidence, ReviewResult
+from backend.schemas.review import DeskCheckResult, ReviewEvent
 from backend.services.orchestrator import (
     _emit,
     _review_result_to_reviewer_report,
@@ -28,7 +28,6 @@ from backend.services.orchestrator import (
     run_review_pipeline,
 )
 from tools.document.models import DocumentMetadata, ParsedDocument, Section
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -53,7 +52,9 @@ def _make_parsed_document() -> ParsedDocument:
     )
 
 
-def _make_mock_agent(return_value: dict | None = None, side_effect: Exception | None = None) -> AsyncMock:
+def _make_mock_agent(
+    return_value: dict | None = None, side_effect: Exception | None = None
+) -> AsyncMock:
     """Create a mock AgentInterface with configurable execute return."""
     agent = AsyncMock(spec=AgentInterface)
     if side_effect:
@@ -120,7 +121,7 @@ async def _collect_events(review_id: uuid.UUID, timeout: float = 5.0) -> list[Re
             if event is None:
                 break
             events.append(event)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pass
     return events
 
@@ -241,8 +242,12 @@ class TestStageParallelReview:
         review_id = uuid.uuid4()
         agents = {
             "core_expert": _make_mock_agent(return_value=_make_reviewer_result("core_expert")),
-            "adjacent_expert": _make_mock_agent(return_value=_make_reviewer_result("adjacent_expert")),
-            "methods_specialist": _make_mock_agent(return_value=_make_reviewer_result("methods_specialist")),
+            "adjacent_expert": _make_mock_agent(
+                return_value=_make_reviewer_result("adjacent_expert")
+            ),
+            "methods_specialist": _make_mock_agent(
+                return_value=_make_reviewer_result("methods_specialist")
+            ),
         }
 
         completed, failed = await _stage_parallel_review(
@@ -253,7 +258,11 @@ class TestStageParallelReview:
 
         assert len(completed) == 3
         assert len(failed) == 0
-        assert {r.reviewer_type for r in completed} == {"core_expert", "adjacent_expert", "methods_specialist"}
+        assert {r.reviewer_type for r in completed} == {
+            "core_expert",
+            "adjacent_expert",
+            "methods_specialist",
+        }
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
@@ -262,7 +271,9 @@ class TestStageParallelReview:
         agents = {
             "core_expert": _make_mock_agent(return_value=_make_reviewer_result("core_expert")),
             "adjacent_expert": _make_mock_agent(side_effect=RuntimeError("LLM error")),
-            "methods_specialist": _make_mock_agent(return_value=_make_reviewer_result("methods_specialist")),
+            "methods_specialist": _make_mock_agent(
+                return_value=_make_reviewer_result("methods_specialist")
+            ),
         }
 
         completed, failed = await _stage_parallel_review(
@@ -327,7 +338,9 @@ class TestReviewResultConversion:
             reviewer_type="core_expert",
             scores={"novelty": 8.0},
             feedback={"novelty": "Excellent"},
-            evidence=[Evidence(claim="novel", source="paper:1", quote="We propose...", relevance=0.9)],
+            evidence=[
+                Evidence(claim="novel", source="paper:1", quote="We propose...", relevance=0.9)
+            ],
             recommendation="accept",
             strengths=["Great work"],
             weaknesses=["Minor issues"],
@@ -362,14 +375,16 @@ class TestFullPipeline:
         meta_reviewer = _make_mock_agent()
         meta_reviewer.execute = AsyncMock(
             side_effect=[
-                _make_desk_check_pass(),     # Stage 2: desk check
-                _make_aggregation_result(),   # Stage 5: aggregation
+                _make_desk_check_pass(),  # Stage 2: desk check
+                _make_aggregation_result(),  # Stage 5: aggregation
             ]
         )
 
         core_expert = _make_mock_agent(return_value=_make_reviewer_result("core_expert"))
         adjacent_expert = _make_mock_agent(return_value=_make_reviewer_result("adjacent_expert"))
-        methods_specialist = _make_mock_agent(return_value=_make_reviewer_result("methods_specialist"))
+        methods_specialist = _make_mock_agent(
+            return_value=_make_reviewer_result("methods_specialist")
+        )
 
         # Run pipeline in background
         pipeline_task = asyncio.create_task(
@@ -442,7 +457,10 @@ class TestFullPipeline:
         # Should have an error event about desk check failure
         error_events = [e for e in events if e.type == "error"]
         assert len(error_events) >= 1
-        assert any("desk check" in (e.message or "").lower() or "gate_check" == e.step for e in error_events)
+        assert any(
+            "desk check" in (e.message or "").lower() or "gate_check" == e.step
+            for e in error_events
+        )
 
         # Reviewers should NOT have been called
         core_expert.execute.assert_not_called()
@@ -476,7 +494,9 @@ class TestFullPipeline:
 
         core_expert = _make_mock_agent(return_value=_make_reviewer_result("core_expert"))
         adjacent_expert = _make_mock_agent(side_effect=RuntimeError("LLM provider unavailable"))
-        methods_specialist = _make_mock_agent(return_value=_make_reviewer_result("methods_specialist"))
+        methods_specialist = _make_mock_agent(
+            return_value=_make_reviewer_result("methods_specialist")
+        )
 
         pipeline_task = asyncio.create_task(
             run_review_pipeline(
@@ -612,7 +632,9 @@ class TestFullPipeline:
 
         core_expert = _make_mock_agent(return_value=_make_reviewer_result("core_expert"))
         adjacent_expert = _make_mock_agent(return_value=_make_reviewer_result("adjacent_expert"))
-        methods_specialist = _make_mock_agent(return_value=_make_reviewer_result("methods_specialist"))
+        methods_specialist = _make_mock_agent(
+            return_value=_make_reviewer_result("methods_specialist")
+        )
 
         pipeline_task = asyncio.create_task(
             run_review_pipeline(
@@ -661,7 +683,9 @@ class TestFullPipeline:
 
         core_expert = _make_mock_agent(return_value=_make_reviewer_result("core_expert"))
         adjacent_expert = _make_mock_agent(return_value=_make_reviewer_result("adjacent_expert"))
-        methods_specialist = _make_mock_agent(return_value=_make_reviewer_result("methods_specialist"))
+        methods_specialist = _make_mock_agent(
+            return_value=_make_reviewer_result("methods_specialist")
+        )
 
         pipeline_task = asyncio.create_task(
             run_review_pipeline(

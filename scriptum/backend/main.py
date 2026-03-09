@@ -2,18 +2,23 @@
 
 Sets up the FastAPI app with CORS, structured logging, request ID middleware,
 and all API routers (reviews, settings, files, websocket).
+
+When a pre-built frontend exists (frontend/out/), it is served as static files
+at the root path, enabling single-process deployment via ``scriptum start``.
 """
 
 import os
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from backend.api.v1 import chat, files, metrics, reviews, settings, websocket
@@ -30,8 +35,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("SCRIPTUM backend starting up")
     await init_db()
     logger.info("Database initialized")
-    # TODO: Initialize LLM clients (Phase 2, Step 2.3)
-    # TODO: Initialize agent manager (Phase 3, Step 3.3)
     yield
     # Shutdown
     logger.info("SCRIPTUM backend shutting down")
@@ -48,10 +51,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware — defaults allow the frontend dev server and the backend's own origin.
+# Override with CORS_ORIGINS env var (comma-separated) for custom deployments.
+_default_origins = (
+    "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000"
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
+    allow_origins=os.getenv("CORS_ORIGINS", _default_origins).split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -150,3 +157,53 @@ app.include_router(chat.ws_router, prefix="/ws")
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "ok", "service": "scriptum-backend"}
+
+
+# ---------------------------------------------------------------------------
+# Static frontend serving (pip package / single-process mode)
+# ---------------------------------------------------------------------------
+
+
+def _find_frontend_dir() -> Path | None:
+    """Locate the pre-built Next.js static export directory.
+
+    Search order:
+      1. frontend/out  (development — relative to scriptum/ package root)
+      2. Alongside the installed backend package (pip install)
+    """
+    # Relative to the scriptum/ monorepo root (works in dev and in-tree)
+    candidates = [
+        Path(__file__).resolve().parent.parent / "frontend" / "out",
+    ]
+    for candidate in candidates:
+        if candidate.is_dir() and (candidate / "index.html").exists():
+            return candidate
+    return None
+
+
+_FRONTEND_DIR = _find_frontend_dir()
+
+if _FRONTEND_DIR is not None:
+    logger.info("Serving static frontend from {}", _FRONTEND_DIR)
+
+    # Mount Next.js static assets (_next/) so they are served directly
+    _next_dir = _FRONTEND_DIR / "_next"
+    if _next_dir.is_dir():
+        app.mount("/_next", StaticFiles(directory=str(_next_dir)), name="next-static")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str) -> FileResponse:
+        """Serve the static Next.js frontend for any non-API path."""
+        file_path = _FRONTEND_DIR / full_path  # type: ignore[operator]
+        # Serve exact file if it exists (e.g. favicon.ico, images)
+        if file_path.is_file():
+            return FileResponse(str(file_path))
+        # Try .html extension (Next.js static export generates page.html files)
+        html_path = file_path.with_suffix(".html")
+        if html_path.is_file():
+            return FileResponse(str(html_path))
+        # For client-side routes, serve index.html (SPA fallback)
+        index = _FRONTEND_DIR / "index.html"  # type: ignore[operator]
+        if index.is_file():
+            return FileResponse(str(index))
+        return FileResponse(str(file_path))  # will 404 naturally

@@ -7,10 +7,11 @@ coverage in the paper's exact subfield.
 
 from __future__ import annotations
 
+from loguru import logger
+
 from agents.core.base import AgentConfig, ToolInterface
 from agents.reviewers.base import BaseReviewer
 from agents.reviewers.prompts import CORE_EXPERT_SYSTEM
-from loguru import logger
 
 
 class CoreExpertAgent(BaseReviewer):
@@ -52,21 +53,25 @@ class CoreExpertAgent(BaseReviewer):
 
         try:
             from tools.research.perplexity import PerplexityTool
+
             tool_factories["perplexity"] = PerplexityTool
         except ImportError:
             pass
         try:
             from tools.research.arxiv import ArxivTool
+
             tool_factories["arxiv"] = ArxivTool
         except ImportError:
             pass
         try:
             from tools.research.semantic_scholar import SemanticScholarTool
+
             tool_factories["semantic_scholar"] = SemanticScholarTool
         except ImportError:
             pass
         try:
             from tools.knowledge.rag import RAGTool
+
             tool_factories["rag"] = RAGTool
         except ImportError:
             pass

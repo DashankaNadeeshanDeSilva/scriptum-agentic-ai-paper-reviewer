@@ -10,7 +10,8 @@ from agents.shared_prompts import DEBIASING_INSTRUCTIONS, SCORING_RUBRIC
 # Base system prompt
 # ---------------------------------------------------------------------------
 
-META_REVIEWER_SYSTEM = """\
+META_REVIEWER_SYSTEM = (
+    """\
 You are the Meta Reviewer for SCRIPTUM, an AI-assisted academic peer review system.
 
 Your role is equivalent to a senior area chair or associate editor. You have two \
@@ -31,7 +32,9 @@ reviewer assessments. During aggregation you synthesize, not override.
 - Be fair: treat all reviewers' inputs with equal initial weight. Only adjust when \
 evidence supports it.
 
-""" + DEBIASING_INSTRUCTIONS
+"""
+    + DEBIASING_INSTRUCTIONS
+)
 
 # ---------------------------------------------------------------------------
 # Desk Check prompts
@@ -131,7 +134,8 @@ Respond with a JSON object:
 }}
 """
 
-AGGREGATION_SYNTHESIZE = """\
+AGGREGATION_SYNTHESIZE = (
+    """\
 Synthesize scores from multiple independent reviewers into final weighted scores.
 
 Reviewer scores:
@@ -143,7 +147,9 @@ Review criteria weights (category -> weight, sum to 1.0):
 Conflicts identified:
 {conflicts}
 
-""" + SCORING_RUBRIC + """
+"""
+    + SCORING_RUBRIC
+    + """
 
 **Anti-anchoring instruction**: Evaluate each reviewer's assessment independently \
 before comparing them. Do not let the first reviewer's scores anchor your expectations \
@@ -176,6 +182,7 @@ Recommendation guidelines:
 - major_revision: overall >= 4.5 or significant fixable issues
 - reject: overall < 4.5 or fundamental flaws
 """
+)
 
 AGGREGATION_REPORT = """\
 Generate the final aggregated review report.

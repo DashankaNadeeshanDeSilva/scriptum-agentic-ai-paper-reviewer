@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentConfig, AgentStatusEnum
+from agents.core.base import AgentConfig
 from agents.reviewers.adjacent_expert import AdjacentExpertAgent
 from agents.reviewers.core_expert import CoreExpertAgent
 from agents.reviewers.methods_specialist import MethodsSpecialistAgent
@@ -20,7 +20,6 @@ from agents.reviewers.prompts import (
     CORE_EXPERT_SYSTEM,
     METHODS_SPECIALIST_SYSTEM,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -35,10 +34,46 @@ def _make_llm_response(text: str) -> MagicMock:
 
 def _all_responses():
     return [
-        json.dumps({"key_prior_works": [], "competing_approaches": [], "methodological_context": [], "red_flags": [], "research_summary": "OK"}),
-        json.dumps({"summary": "OK", "technical_analysis": {}, "context_in_literature": "", "key_observations": [], "questions_for_authors": []}),
-        json.dumps({"scores": {"novelty": 7.0, "methodology": 7.0, "significance": 7.0, "presentation": 7.0, "reproducibility": 7.0}, "evidence": [], "strengths": ["Good"], "weaknesses": ["OK"]}),
-        json.dumps({"feedback": {"novelty": "Good"}, "recommendation": "minor_revision", "confidence": 0.7, "summary": "Solid work."}),
+        json.dumps(
+            {
+                "key_prior_works": [],
+                "competing_approaches": [],
+                "methodological_context": [],
+                "red_flags": [],
+                "research_summary": "OK",
+            }
+        ),
+        json.dumps(
+            {
+                "summary": "OK",
+                "technical_analysis": {},
+                "context_in_literature": "",
+                "key_observations": [],
+                "questions_for_authors": [],
+            }
+        ),
+        json.dumps(
+            {
+                "scores": {
+                    "novelty": 7.0,
+                    "methodology": 7.0,
+                    "significance": 7.0,
+                    "presentation": 7.0,
+                    "reproducibility": 7.0,
+                },
+                "evidence": [],
+                "strengths": ["Good"],
+                "weaknesses": ["OK"],
+            }
+        ),
+        json.dumps(
+            {
+                "feedback": {"novelty": "Good"},
+                "recommendation": "minor_revision",
+                "confidence": 0.7,
+                "summary": "Solid work.",
+            }
+        ),
     ]
 
 
@@ -75,9 +110,7 @@ class TestCoreExpert:
     async def test_full_pipeline(self, sample_task_input) -> None:
         agent = CoreExpertAgent()
         mock_llm = AsyncMock()
-        mock_llm.complete = AsyncMock(
-            side_effect=[_make_llm_response(r) for r in _all_responses()]
-        )
+        mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in _all_responses()])
         with (
             patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
@@ -117,9 +150,7 @@ class TestAdjacentExpert:
     async def test_full_pipeline(self, sample_task_input) -> None:
         agent = AdjacentExpertAgent()
         mock_llm = AsyncMock()
-        mock_llm.complete = AsyncMock(
-            side_effect=[_make_llm_response(r) for r in _all_responses()]
-        )
+        mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in _all_responses()])
         with (
             patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(AdjacentExpertAgent, "_create_tools", return_value=[]),
@@ -159,9 +190,7 @@ class TestMethodsSpecialist:
     async def test_full_pipeline(self, sample_task_input) -> None:
         agent = MethodsSpecialistAgent()
         mock_llm = AsyncMock()
-        mock_llm.complete = AsyncMock(
-            side_effect=[_make_llm_response(r) for r in _all_responses()]
-        )
+        mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in _all_responses()])
         with (
             patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(MethodsSpecialistAgent, "_create_tools", return_value=[]),
@@ -184,32 +213,41 @@ class TestToolCreation:
         agent = CoreExpertAgent()
         # We can't test actual tool creation without API keys, but
         # we can verify the _create_tools method exists and is callable
-        with patch.dict("sys.modules", {
-            "tools.research.perplexity": None,
-            "tools.research.arxiv": None,
-            "tools.research.semantic_scholar": None,
-            "tools.knowledge.rag": None,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "tools.research.perplexity": None,
+                "tools.research.arxiv": None,
+                "tools.research.semantic_scholar": None,
+                "tools.knowledge.rag": None,
+            },
+        ):
             tools = agent._create_tools()
             assert tools == []  # All imports fail gracefully
 
     def test_adjacent_expert_tool_set(self) -> None:
         agent = AdjacentExpertAgent()
-        with patch.dict("sys.modules", {
-            "tools.research.perplexity": None,
-            "tools.research.google_search": None,
-            "tools.knowledge.rag": None,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "tools.research.perplexity": None,
+                "tools.research.google_search": None,
+                "tools.knowledge.rag": None,
+            },
+        ):
             tools = agent._create_tools()
             assert tools == []
 
     def test_methods_specialist_tool_set(self) -> None:
         agent = MethodsSpecialistAgent()
-        with patch.dict("sys.modules", {
-            "tools.research.perplexity": None,
-            "tools.research.semantic_scholar": None,
-            "tools.knowledge.rag": None,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "tools.research.perplexity": None,
+                "tools.research.semantic_scholar": None,
+                "tools.knowledge.rag": None,
+            },
+        ):
             tools = agent._create_tools()
             assert tools == []
 

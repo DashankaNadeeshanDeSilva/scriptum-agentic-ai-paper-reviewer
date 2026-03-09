@@ -140,9 +140,7 @@ async def get_ollama_models(
             resp.raise_for_status()
             data = resp.json()
             models = [m["name"] for m in data.get("models", [])]
-            logger.debug(
-                "Found {} Ollama models (request {})", len(models), request_id
-            )
+            logger.debug("Found {} Ollama models (request {})", len(models), request_id)
             return {"models": models, "error": None}
     except Exception as exc:
         logger.warning("Failed to query Ollama models: {}", exc)
@@ -167,7 +165,7 @@ def _merge_updates(current: Any, updates: dict) -> None:
                     _merge_updates(current_val[sub_key], sub_value)
                 else:
                     current_val[sub_key] = sub_value
-        elif isinstance(value, dict) and hasattr(current_val, "__fields__"):
+        elif isinstance(value, dict) and hasattr(current_val, "model_fields"):
             _merge_updates(current_val, value)
         else:
             setattr(current, key, value)

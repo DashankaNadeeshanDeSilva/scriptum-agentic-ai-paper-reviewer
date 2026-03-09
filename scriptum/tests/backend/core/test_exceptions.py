@@ -54,9 +54,15 @@ class TestScriptumErrorHierarchy:
 
     def test_all_are_scriptum_errors(self):
         classes = [
-            ConfigError, ReviewError, ReviewNotFoundError, ReviewStateError,
-            AgentError, AgentTimeoutError, DocumentProcessingError,
-            LLMError, ParsingError,
+            ConfigError,
+            ReviewError,
+            ReviewNotFoundError,
+            ReviewStateError,
+            AgentError,
+            AgentTimeoutError,
+            DocumentProcessingError,
+            LLMError,
+            ParsingError,
         ]
         for cls in classes:
             assert issubclass(cls, ScriptumError)

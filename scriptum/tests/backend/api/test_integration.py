@@ -6,10 +6,9 @@ Agents are mocked (no real LLM calls). The orchestrator pipeline is simulated.
 
 import io
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from sqlalchemy import update
 
 from backend.models.review import Metric, Review
@@ -74,7 +73,7 @@ class TestReviewLifecycleIntegration:
             "suggested_improvements": ["Add more baselines"],
             "individual_reviews": [],
             "desk_check": None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
         stmt = (
             update(Review)
@@ -82,7 +81,7 @@ class TestReviewLifecycleIntegration:
             .values(
                 status="completed",
                 final_report=fake_report,
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
         )
         await db_session.execute(stmt)
@@ -156,10 +155,12 @@ class TestReviewLifecycleIntegration:
         status_resp = await client.get(f"/api/v1/reviews/{review_id}")
         assert status_resp.json()["status"] == "cancelled"
 
-    async def test_metrics_endpoint_returns_data_after_review(self, client, db_session, tmp_upload_dir):
+    async def test_metrics_endpoint_returns_data_after_review(
+        self, client, db_session, tmp_upload_dir
+    ):
         """After a review, metrics dashboard should reflect it."""
         # Create a completed review
-        review = Review(status="completed", journal_name="test", completed_at=datetime.now(timezone.utc))
+        review = Review(status="completed", journal_name="test", completed_at=datetime.now(UTC))
         db_session.add(review)
         await db_session.commit()
         await db_session.refresh(review)

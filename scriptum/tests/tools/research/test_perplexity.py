@@ -47,9 +47,7 @@ class TestPerplexitySearch:
     @pytest.mark.asyncio
     async def test_search_with_citations_only(self, tool: PerplexityTool) -> None:
         response_data = {
-            "choices": [
-                {"message": {"content": "Transformers are..."}, "finish_reason": "stop"}
-            ],
+            "choices": [{"message": {"content": "Transformers are..."}, "finish_reason": "stop"}],
             "citations": [
                 "https://arxiv.org/abs/1706.03762",
                 "https://arxiv.org/abs/1810.04805",
@@ -75,9 +73,7 @@ class TestPerplexitySearch:
     async def test_search_answer_only_fallback(self, tool: PerplexityTool) -> None:
         response_data = {
             "model": "sonar",
-            "choices": [
-                {"message": {"content": "A plain answer without citations"}}
-            ],
+            "choices": [{"message": {"content": "A plain answer without citations"}}],
         }
         mock_resp = MagicMock(spec=httpx.Response)
         mock_resp.status_code = 200
