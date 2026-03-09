@@ -51,10 +51,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware — defaults allow the frontend dev server and the backend's own origin.
+# Override with CORS_ORIGINS env var (comma-separated) for custom deployments.
+_default_origins = (
+    "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000"
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
+    allow_origins=os.getenv("CORS_ORIGINS", _default_origins).split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -158,6 +162,7 @@ async def health_check() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # Static frontend serving (pip package / single-process mode)
 # ---------------------------------------------------------------------------
+
 
 def _find_frontend_dir() -> Path | None:
     """Locate the pre-built Next.js static export directory.

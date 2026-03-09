@@ -16,7 +16,6 @@ from loguru import logger
 
 from agents.core.base import ToolInterface
 
-
 # ---------------------------------------------------------------------------
 # Data models (plain dataclasses — ephemeral internal objects)
 # ---------------------------------------------------------------------------
@@ -121,10 +120,16 @@ async def http_request_with_retry(
             resp = await client.request(method, url, **kwargs)
 
             if resp.status_code == 429:
-                retry_after = float(resp.headers.get("Retry-After", "0")) or retry_base_delay * (2**attempt)
+                retry_after = float(resp.headers.get("Retry-After", "0")) or retry_base_delay * (
+                    2**attempt
+                )
                 logger.warning(
                     "Rate limited (429) on {} {}, retry in {:.1f}s (attempt {}/{})",
-                    method, url, retry_after, attempt + 1, max_retries,
+                    method,
+                    url,
+                    retry_after,
+                    attempt + 1,
+                    max_retries,
                 )
                 await asyncio.sleep(retry_after)
                 continue
@@ -133,7 +138,10 @@ async def http_request_with_retry(
                 delay = retry_base_delay * (2**attempt)
                 logger.warning(
                     "Server error ({}) on {} {}, retry in {:.1f}s",
-                    resp.status_code, method, url, delay,
+                    resp.status_code,
+                    method,
+                    url,
+                    delay,
                 )
                 await asyncio.sleep(delay)
                 continue
@@ -147,7 +155,10 @@ async def http_request_with_retry(
                 delay = retry_base_delay * (2**attempt)
                 logger.warning(
                     "{} on {} {}, retry in {:.1f}s",
-                    type(exc).__name__, method, url, delay,
+                    type(exc).__name__,
+                    method,
+                    url,
+                    delay,
                 )
                 await asyncio.sleep(delay)
             else:
@@ -157,5 +168,7 @@ async def http_request_with_retry(
     if last_exc:
         raise last_exc
     raise httpx.HTTPStatusError(
-        "Max retries exceeded", request=httpx.Request(method, url), response=resp  # type: ignore[possibly-undefined]
+        "Max retries exceeded",
+        request=httpx.Request(method, url),
+        response=resp,  # type: ignore[possibly-undefined]
     )

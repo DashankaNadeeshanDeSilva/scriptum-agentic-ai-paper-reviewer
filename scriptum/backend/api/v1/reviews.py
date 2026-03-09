@@ -6,7 +6,6 @@ cancellation, and user feedback submission.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 
@@ -19,12 +18,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.deps import get_db, get_request_id
 from backend.api.v1.files import UPLOAD_DIR
 from backend.core.exceptions import ReviewNotFoundError, ReviewStateError
-from backend.models.review import Feedback, File, Review, ReviewerResult
+from backend.models.review import Feedback, File, Review
 from backend.schemas.review import (
     FeedbackRequest,
-    ReviewEvent,
     ReviewListResponse,
-    ReviewReport,
     ReviewStatusResponse,
     ReviewSummary,
     StartReviewRequest,
@@ -64,7 +61,9 @@ def _extract_review_criteria(journal_config: dict | None) -> dict[str, float]:
     if not journal_config:
         return {}
     criteria = journal_config.get("review_criteria", {})
-    return {cat: info.get("weight", 0.0) for cat, info in criteria.items() if isinstance(info, dict)}
+    return {
+        cat: info.get("weight", 0.0) for cat, info in criteria.items() if isinstance(info, dict)
+    }
 
 
 async def _create_agents():
@@ -149,13 +148,15 @@ async def start_review(
             raise HTTPException(status_code=404, detail=f"Uploaded file directory empty: {file_id}")
         f = stored_files[0]
         ext = f.suffix.lower()
-        file_paths.append({
-            "file_id": file_id,
-            "filename": f.name,
-            "file_type": {".pdf": "pdf", ".tex": "latex", ".bib": "bibtex"}.get(ext, "unknown"),
-            "storage_path": str(f),
-            "size_bytes": f.stat().st_size,
-        })
+        file_paths.append(
+            {
+                "file_id": file_id,
+                "filename": f.name,
+                "file_type": {".pdf": "pdf", ".tex": "latex", ".bib": "bibtex"}.get(ext, "unknown"),
+                "storage_path": str(f),
+                "size_bytes": f.stat().st_size,
+            }
+        )
 
     # Ensure at least one PDF
     has_pdf = any(fp["file_type"] == "pdf" for fp in file_paths)

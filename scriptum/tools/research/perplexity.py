@@ -89,9 +89,7 @@ class PerplexityTool(ResearchTool):
             logger.error("Perplexity search failed: {}", exc)
             return []
 
-    def _parse_response(
-        self, data: dict[str, Any], max_results: int
-    ) -> list[SearchResult]:
+    def _parse_response(self, data: dict[str, Any], max_results: int) -> list[SearchResult]:
         """Extract SearchResults from the Perplexity API response.
 
         The response may contain:

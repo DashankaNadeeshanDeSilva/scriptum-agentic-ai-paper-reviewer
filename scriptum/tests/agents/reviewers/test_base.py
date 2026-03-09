@@ -14,7 +14,6 @@ import pytest
 from agents.core.base import AgentStatusEnum
 from agents.reviewers.core_expert import CoreExpertAgent
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -27,69 +26,81 @@ def _make_llm_response(text: str) -> MagicMock:
 
 
 def _research_json() -> str:
-    return json.dumps({
-        "key_prior_works": [
-            {"title": "Prior Work", "relevance": "Relevant", "source": "arxiv"}
-        ],
-        "competing_approaches": [],
-        "methodological_context": [],
-        "red_flags": [],
-        "research_summary": "Found relevant prior work.",
-    })
+    return json.dumps(
+        {
+            "key_prior_works": [
+                {"title": "Prior Work", "relevance": "Relevant", "source": "arxiv"}
+            ],
+            "competing_approaches": [],
+            "methodological_context": [],
+            "red_flags": [],
+            "research_summary": "Found relevant prior work.",
+        }
+    )
 
 
 def _analysis_json() -> str:
-    return json.dumps({
-        "summary": "Novel transformer architecture.",
-        "technical_analysis": {
-            "approach": "Sound",
-            "theoretical_foundation": "Solid",
-            "experimental_design": "Well-designed",
-            "results_validity": "Valid",
-        },
-        "context_in_literature": "Advances the field.",
-        "key_observations": [
-            {"observation": "Novel attention", "section_reference": "Section 3", "importance": "high"}
-        ],
-        "questions_for_authors": ["What about longer sequences?"],
-    })
+    return json.dumps(
+        {
+            "summary": "Novel transformer architecture.",
+            "technical_analysis": {
+                "approach": "Sound",
+                "theoretical_foundation": "Solid",
+                "experimental_design": "Well-designed",
+                "results_validity": "Valid",
+            },
+            "context_in_literature": "Advances the field.",
+            "key_observations": [
+                {
+                    "observation": "Novel attention",
+                    "section_reference": "Section 3",
+                    "importance": "high",
+                }
+            ],
+            "questions_for_authors": ["What about longer sequences?"],
+        }
+    )
 
 
 def _evaluate_json() -> str:
-    return json.dumps({
-        "scores": {
-            "novelty": 8.0,
-            "methodology": 7.5,
-            "significance": 8.0,
-            "presentation": 7.0,
-            "reproducibility": 6.5,
-        },
-        "evidence": [
-            {
-                "claim": "Novel attention mechanism",
-                "source": "paper:section:3",
-                "quote": "We propose multi-head attention",
-                "relevance": 0.9,
-            }
-        ],
-        "strengths": ["Highly original architecture", "Strong empirical results"],
-        "weaknesses": ["Limited reproducibility details"],
-    })
+    return json.dumps(
+        {
+            "scores": {
+                "novelty": 8.0,
+                "methodology": 7.5,
+                "significance": 8.0,
+                "presentation": 7.0,
+                "reproducibility": 6.5,
+            },
+            "evidence": [
+                {
+                    "claim": "Novel attention mechanism",
+                    "source": "paper:section:3",
+                    "quote": "We propose multi-head attention",
+                    "relevance": 0.9,
+                }
+            ],
+            "strengths": ["Highly original architecture", "Strong empirical results"],
+            "weaknesses": ["Limited reproducibility details"],
+        }
+    )
 
 
 def _feedback_json() -> str:
-    return json.dumps({
-        "feedback": {
-            "novelty": "Highly novel transformer architecture.",
-            "methodology": "Sound experimental design.",
-            "significance": "Major impact on NLP.",
-            "presentation": "Well-written but dense.",
-            "reproducibility": "Needs code release.",
-        },
-        "recommendation": "accept",
-        "confidence": 0.85,
-        "summary": "Strong paper recommended for acceptance.",
-    })
+    return json.dumps(
+        {
+            "feedback": {
+                "novelty": "Highly novel transformer architecture.",
+                "methodology": "Sound experimental design.",
+                "significance": "Major impact on NLP.",
+                "presentation": "Well-written but dense.",
+                "reproducibility": "Needs code release.",
+            },
+            "recommendation": "accept",
+            "confidence": 0.85,
+            "summary": "Strong paper recommended for acceptance.",
+        }
+    )
 
 
 def _all_responses():
@@ -98,9 +109,7 @@ def _all_responses():
 
 def _make_mock_llm(responses):
     mock_llm = AsyncMock()
-    mock_llm.complete = AsyncMock(
-        side_effect=[_make_llm_response(r) for r in responses]
-    )
+    mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in responses])
     return mock_llm
 
 
@@ -144,8 +153,12 @@ class TestInitialization:
 class TestResearchNode:
     @pytest.mark.asyncio
     async def test_research_gathers_from_tools(
-        self, core_expert_config, sample_task_input,
-        mock_perplexity_tool, mock_arxiv_tool, mock_rag_tool,
+        self,
+        core_expert_config,
+        sample_task_input,
+        mock_perplexity_tool,
+        mock_arxiv_tool,
+        mock_rag_tool,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         tools = [mock_perplexity_tool, mock_arxiv_tool, mock_rag_tool]
@@ -165,7 +178,9 @@ class TestResearchNode:
 
     @pytest.mark.asyncio
     async def test_research_handles_tool_failure(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         failing_tool = AsyncMock()
@@ -186,7 +201,9 @@ class TestResearchNode:
 
     @pytest.mark.asyncio
     async def test_research_with_no_tools(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -204,7 +221,9 @@ class TestResearchNode:
 class TestAnalyzeNode:
     @pytest.mark.asyncio
     async def test_analyze_calls_llm(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -221,7 +240,9 @@ class TestAnalyzeNode:
 
     @pytest.mark.asyncio
     async def test_analyze_handles_json_error(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         responses = [_research_json(), "not valid json", _evaluate_json(), _feedback_json()]
@@ -240,7 +261,9 @@ class TestAnalyzeNode:
 class TestEvaluateNode:
     @pytest.mark.asyncio
     async def test_evaluate_produces_scores(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -259,7 +282,9 @@ class TestEvaluateNode:
 
     @pytest.mark.asyncio
     async def test_evaluate_uses_default_criteria_when_missing(
-        self, core_expert_config, sample_paper_dict,
+        self,
+        core_expert_config,
+        sample_paper_dict,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         task_input = {"paper": sample_paper_dict}
@@ -276,7 +301,9 @@ class TestEvaluateNode:
 
     @pytest.mark.asyncio
     async def test_evaluate_handles_llm_failure(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         responses = [_research_json(), _analysis_json(), "broken json", _feedback_json()]
@@ -296,7 +323,9 @@ class TestEvaluateNode:
 class TestGenerateFeedbackNode:
     @pytest.mark.asyncio
     async def test_feedback_produces_recommendation(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -313,7 +342,9 @@ class TestGenerateFeedbackNode:
 
     @pytest.mark.asyncio
     async def test_feedback_handles_llm_failure(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         responses = [_research_json(), _analysis_json(), _evaluate_json(), "broken json"]
@@ -332,7 +363,9 @@ class TestGenerateFeedbackNode:
 class TestStreaming:
     @pytest.mark.asyncio
     async def test_stream_yields_progress_events(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -355,7 +388,9 @@ class TestStreaming:
 class TestResultExtraction:
     @pytest.mark.asyncio
     async def test_result_has_reviewer_type(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -371,7 +406,9 @@ class TestResultExtraction:
 
     @pytest.mark.asyncio
     async def test_result_matches_review_result_schema(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())
@@ -384,8 +421,14 @@ class TestResultExtraction:
             result = await agent.execute(sample_task_input)
 
         required_keys = {
-            "reviewer_type", "scores", "feedback", "evidence",
-            "recommendation", "confidence", "strengths", "weaknesses",
+            "reviewer_type",
+            "scores",
+            "feedback",
+            "evidence",
+            "recommendation",
+            "confidence",
+            "strengths",
+            "weaknesses",
         }
         assert required_keys.issubset(set(result.keys()))
 
@@ -403,7 +446,9 @@ class TestContextAndIntrospection:
 
     @pytest.mark.asyncio
     async def test_status_is_completed_after_execute(
-        self, core_expert_config, sample_task_input,
+        self,
+        core_expert_config,
+        sample_task_input,
     ) -> None:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm(_all_responses())

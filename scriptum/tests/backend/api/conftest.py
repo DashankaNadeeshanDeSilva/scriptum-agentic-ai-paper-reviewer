@@ -4,9 +4,6 @@ Provides an in-memory SQLite database and an httpx AsyncClient
 wired to the FastAPI app with dependency overrides.
 """
 
-import shutil
-import tempfile
-from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
@@ -14,8 +11,8 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from backend.core.database import Base
 from backend.api.deps import get_db
+from backend.core.database import Base
 
 
 @pytest.fixture

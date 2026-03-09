@@ -11,7 +11,7 @@ Until linked to a review, files exist in a temporary upload area.
 from __future__ import annotations
 
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -164,7 +164,7 @@ async def get_file_info(
                 filename=f.name,
                 file_type=_file_type_from_ext(ext),
                 size_bytes=f.stat().st_size,
-                created_at=datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc),
+                created_at=datetime.fromtimestamp(f.stat().st_mtime, tz=UTC),
             )
 
     raise HTTPException(status_code=404, detail="File not found.")

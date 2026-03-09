@@ -91,8 +91,11 @@ class TestHttpRequestWithRetry:
         client.request = AsyncMock(side_effect=[rate_limited, success])
 
         resp = await http_request_with_retry(
-            client, "GET", "https://api.example.com/test",
-            max_retries=3, retry_base_delay=0.01,
+            client,
+            "GET",
+            "https://api.example.com/test",
+            max_retries=3,
+            retry_base_delay=0.01,
         )
         assert resp.status_code == 200
         assert client.request.await_count == 2
@@ -110,8 +113,11 @@ class TestHttpRequestWithRetry:
         client.request = AsyncMock(side_effect=[server_error, success])
 
         resp = await http_request_with_retry(
-            client, "GET", "https://api.example.com/test",
-            max_retries=3, retry_base_delay=0.01,
+            client,
+            "GET",
+            "https://api.example.com/test",
+            max_retries=3,
+            retry_base_delay=0.01,
         )
         assert resp.status_code == 200
         assert client.request.await_count == 2
@@ -133,8 +139,11 @@ class TestHttpRequestWithRetry:
 
         with pytest.raises(httpx.HTTPStatusError):
             await http_request_with_retry(
-                client, "GET", "https://api.example.com/test",
-                max_retries=3, retry_base_delay=0.01,
+                client,
+                "GET",
+                "https://api.example.com/test",
+                max_retries=3,
+                retry_base_delay=0.01,
             )
         # No retry on 4xx (except 429)
         assert client.request.await_count == 1
@@ -146,13 +155,14 @@ class TestHttpRequestWithRetry:
         success.raise_for_status = MagicMock()
 
         client = AsyncMock(spec=httpx.AsyncClient)
-        client.request = AsyncMock(
-            side_effect=[httpx.TimeoutException("timeout"), success]
-        )
+        client.request = AsyncMock(side_effect=[httpx.TimeoutException("timeout"), success])
 
         resp = await http_request_with_retry(
-            client, "GET", "https://api.example.com/test",
-            max_retries=3, retry_base_delay=0.01,
+            client,
+            "GET",
+            "https://api.example.com/test",
+            max_retries=3,
+            retry_base_delay=0.01,
         )
         assert resp.status_code == 200
         assert client.request.await_count == 2
@@ -160,13 +170,14 @@ class TestHttpRequestWithRetry:
     @pytest.mark.asyncio
     async def test_exhausted_retries_raises(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
-        client.request = AsyncMock(
-            side_effect=httpx.ConnectError("Connection refused")
-        )
+        client.request = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
 
         with pytest.raises(httpx.ConnectError):
             await http_request_with_retry(
-                client, "GET", "https://api.example.com/test",
-                max_retries=2, retry_base_delay=0.01,
+                client,
+                "GET",
+                "https://api.example.com/test",
+                max_retries=2,
+                retry_base_delay=0.01,
             )
         assert client.request.await_count == 2

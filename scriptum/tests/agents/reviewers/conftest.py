@@ -167,7 +167,10 @@ def sample_paper_dict() -> dict:
         "sections": [
             {"heading": "Abstract", "text": "We propose a new architecture..."},
             {"heading": "Introduction", "text": "Recurrent neural networks..."},
-            {"heading": "Model Architecture", "text": "The Transformer follows an encoder-decoder..."},
+            {
+                "heading": "Model Architecture",
+                "text": "The Transformer follows an encoder-decoder...",
+            },
             {"heading": "Experiments", "text": "We trained on WMT 2014..."},
             {"heading": "Results", "text": "Our model achieves 28.4 BLEU..."},
             {"heading": "Conclusion", "text": "We presented the Transformer..."},

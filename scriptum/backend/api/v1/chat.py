@@ -107,7 +107,9 @@ async def review_chat_ws(
             return
 
         if review.status != "completed":
-            await websocket.send_json({"type": "error", "message": "Review must be completed before chatting"})
+            await websocket.send_json(
+                {"type": "error", "message": "Review must be completed before chatting"}
+            )
             await websocket.close()
             return
 

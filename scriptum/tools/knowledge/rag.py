@@ -105,7 +105,9 @@ class RAGTool(ToolInterface):
         def _store() -> None:
             col = self._client.get_or_create_collection(name=collection)
             # ChromaDB requires IDs; generate if not provided
-            doc_ids = ids or [f"{collection}_{i}" for i in range(col.count(), col.count() + len(texts))]
+            doc_ids = ids or [
+                f"{collection}_{i}" for i in range(col.count(), col.count() + len(texts))
+            ]
             col.add(documents=texts, metadatas=metadatas, ids=doc_ids)
 
         await asyncio.to_thread(_store)
@@ -160,7 +162,7 @@ class RAGTool(ToolInterface):
 
             return [
                 {"document": doc, "metadata": meta, "distance": dist}
-                for doc, meta, dist in zip(documents, metadatas, distances)
+                for doc, meta, dist in zip(documents, metadatas, distances, strict=False)
             ]
 
         try:

@@ -117,12 +117,16 @@ async def _llm_structure_references(refs: list[Reference]) -> list[Reference]:
         batch_refs = [refs[i] for i in batch_indices]
 
         # Only process refs that have raw_text and aren't already resolved
-        unresolved = [(idx, ref) for idx, ref in zip(batch_indices, batch_refs) if ref.raw_text and not ref.resolved]
+        unresolved = [
+            (idx, ref)
+            for idx, ref in zip(batch_indices, batch_refs, strict=False)
+            if ref.raw_text and not ref.resolved
+        ]
         if not unresolved:
             continue
 
         # Build the user message with numbered references
-        numbered = "\n".join(f"{i+1}. {ref.raw_text}" for i, (_, ref) in enumerate(unresolved))
+        numbered = "\n".join(f"{i + 1}. {ref.raw_text}" for i, (_, ref) in enumerate(unresolved))
         messages = [
             {"role": "system", "content": _LLM_SYSTEM_PROMPT},
             {"role": "user", "content": f"Parse these {len(unresolved)} references:\n\n{numbered}"},
@@ -137,7 +141,7 @@ async def _llm_structure_references(refs: list[Reference]) -> list[Reference]:
                 continue
 
             # Map results back to the original references
-            for (orig_idx, _), result in zip(unresolved, parsed):
+            for (orig_idx, _), result in zip(unresolved, parsed, strict=False):
                 if not isinstance(result, dict):
                     continue
                 ref = refs[orig_idx]
@@ -214,7 +218,10 @@ async def _crossref_lookup(client: httpx.AsyncClient, ref: Reference) -> None:
             return
 
         # Simple similarity check — first 40 chars lowered
-        if ref.title[:40].lower() not in cr_title[:60].lower() and cr_title[:40].lower() not in ref.title[:60].lower():
+        if (
+            ref.title[:40].lower() not in cr_title[:60].lower()
+            and cr_title[:40].lower() not in ref.title[:60].lower()
+        ):
             return
 
         # Extract DOI

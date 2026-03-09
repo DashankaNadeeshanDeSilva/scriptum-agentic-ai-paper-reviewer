@@ -42,6 +42,5 @@ def create_agent(config: AgentConfig | None = None) -> AgentInterface:
         return SmolAgentsAdapter(config=config)
 
     raise ValueError(
-        f"Unknown agent framework: '{framework}'. "
-        "Supported values: langgraph, crewai, smolagents."
+        f"Unknown agent framework: '{framework}'. Supported values: langgraph, crewai, smolagents."
     )

@@ -135,10 +135,7 @@ class CrossRefTool(ResearchTool):
         title = titles[0] if titles else ""
 
         authors = item.get("author", [])
-        author_names = [
-            f"{a.get('given', '')} {a.get('family', '')}".strip()
-            for a in authors
-        ]
+        author_names = [f"{a.get('given', '')} {a.get('family', '')}".strip() for a in authors]
 
         year = None
         issued = item.get("issued", {})
@@ -169,10 +166,7 @@ class CrossRefTool(ResearchTool):
         title = titles[0] if titles else ""
 
         authors = item.get("author", [])
-        author_names = [
-            f"{a.get('given', '')} {a.get('family', '')}".strip()
-            for a in authors
-        ]
+        author_names = [f"{a.get('given', '')} {a.get('family', '')}".strip() for a in authors]
 
         year = None
         issued = item.get("issued", {})

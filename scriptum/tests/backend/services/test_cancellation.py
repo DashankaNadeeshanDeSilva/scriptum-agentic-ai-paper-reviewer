@@ -9,15 +9,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from backend.services.orchestrator import (
-    _PipelineCancelled,
     _check_cancelled,
     _get_cancel_event,
     _is_cancelled,
+    _PipelineCancelled,
     remove_event_queue,
     request_cancellation,
     run_review_pipeline,
 )
-
 
 # ---------------------------------------------------------------------------
 # Cancellation registry
@@ -122,7 +121,9 @@ class TestPipelineCancellation:
             patch("backend.services.orchestrator._run_pipeline_stages", side_effect=fake_stages),
             patch("backend.services.orchestrator._emit", new_callable=AsyncMock) as mock_emit,
             patch("backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock),
-            patch("backend.services.orchestrator._update_status", new_callable=AsyncMock) as mock_update,
+            patch(
+                "backend.services.orchestrator._update_status", new_callable=AsyncMock
+            ) as mock_update,
         ):
             # Setup session mock
             mock_session = AsyncMock()
@@ -142,8 +143,7 @@ class TestPipelineCancellation:
 
             # Should have emitted a cancellation event
             cancel_calls = [
-                call for call in mock_emit.call_args_list
-                if call.args[1].step == "cancelled"
+                call for call in mock_emit.call_args_list if call.args[1].step == "cancelled"
             ]
             assert len(cancel_calls) == 1
             assert "cancelled" in cancel_calls[0].args[1].message.lower()
@@ -164,7 +164,9 @@ class TestPipelineCancellation:
             patch("backend.services.orchestrator.async_session_factory") as mock_session_factory,
             patch("backend.services.orchestrator._run_pipeline_stages", side_effect=fake_stages),
             patch("backend.services.orchestrator._emit", new_callable=AsyncMock),
-            patch("backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock) as mock_sentinel,
+            patch(
+                "backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock
+            ) as mock_sentinel,
             patch("backend.services.orchestrator._update_status", new_callable=AsyncMock),
         ):
             mock_session = AsyncMock()

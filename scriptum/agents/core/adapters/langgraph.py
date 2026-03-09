@@ -25,7 +25,6 @@ from agents.core.base import (
 )
 from backend.core.llm import LLMClient
 
-
 # ---------------------------------------------------------------------------
 # Graph state
 # ---------------------------------------------------------------------------
@@ -141,18 +140,14 @@ class LangGraphAdapter(AgentInterface):
             )
             self._status = AgentStatusEnum.COMPLETED
             return self._extract_result(final_state)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._status = AgentStatusEnum.FAILED
-            raise RuntimeError(
-                f"Agent execution timed out after {self._config.timeout}s"
-            )
+            raise RuntimeError(f"Agent execution timed out after {self._config.timeout}s") from None
         except Exception:
             self._status = AgentStatusEnum.FAILED
             raise
 
-    async def stream(
-        self, input_data: dict[str, Any]
-    ) -> AsyncGenerator[dict[str, Any], None]:
+    async def stream(self, input_data: dict[str, Any]) -> AsyncGenerator[dict[str, Any], None]:
         """Stream progress events from graph execution.
 
         Yields one :class:`ProgressEvent`-like dict per graph node.

@@ -7,10 +7,11 @@ Uses Perplexity, Google Search, and RAG for wide-ranging context.
 
 from __future__ import annotations
 
+from loguru import logger
+
 from agents.core.base import AgentConfig, ToolInterface
 from agents.reviewers.base import BaseReviewer
 from agents.reviewers.prompts import ADJACENT_EXPERT_SYSTEM
-from loguru import logger
 
 
 class AdjacentExpertAgent(BaseReviewer):
@@ -52,16 +53,19 @@ class AdjacentExpertAgent(BaseReviewer):
 
         try:
             from tools.research.perplexity import PerplexityTool
+
             tool_factories["perplexity"] = PerplexityTool
         except ImportError:
             pass
         try:
             from tools.research.google_search import GoogleSearchTool
+
             tool_factories["google_search"] = GoogleSearchTool
         except ImportError:
             pass
         try:
             from tools.knowledge.rag import RAGTool
+
             tool_factories["rag"] = RAGTool
         except ImportError:
             pass

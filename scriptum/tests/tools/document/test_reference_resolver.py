@@ -6,14 +6,12 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
-import pytest
 
 from tools.document.models import Reference
 from tools.document.reference_resolver import (
     _crossref_lookup,
     resolve_references,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -88,8 +86,18 @@ class TestLLMStructuring:
         ]
 
         llm_result = [
-            {"title": "Attention Is All You Need", "authors": ["Vaswani"], "year": "2017", "venue": "NeurIPS"},
-            {"title": "BERT: Pre-training", "authors": ["Devlin"], "year": "2019", "venue": "NAACL"},
+            {
+                "title": "Attention Is All You Need",
+                "authors": ["Vaswani"],
+                "year": "2017",
+                "venue": "NeurIPS",
+            },
+            {
+                "title": "BERT: Pre-training",
+                "authors": ["Devlin"],
+                "year": "2019",
+                "venue": "NAACL",
+            },
         ]
 
         mock_client = AsyncMock()

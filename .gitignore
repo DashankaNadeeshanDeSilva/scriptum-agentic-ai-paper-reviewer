@@ -217,10 +217,15 @@ scriptum/docker/.env
 node_modules/
 .next/
 out/
+.env.local
+.env*.local
 
 # Project Documentation (keep local only)
 Docs/
 AGENTS.md
+
+# Build-generated README copy (original is at repo root)
+scriptum/README.md
 
 # Claude Code (skills, settings, plans — local only)
 .claude/

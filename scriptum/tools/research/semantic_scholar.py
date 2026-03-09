@@ -117,9 +117,7 @@ class SemanticScholarTool(ResearchTool):
             logger.error("Semantic Scholar get_paper({}) failed: {}", paper_id, exc)
             return None
 
-    async def get_citations(
-        self, paper_id: str, *, limit: int = 50
-    ) -> CitationGraph:
+    async def get_citations(self, paper_id: str, *, limit: int = 50) -> CitationGraph:
         """Get papers that cite this paper.
 
         ``GET /paper/{paper_id}/citations?fields={fields}&limit={limit}``
@@ -143,9 +141,7 @@ class SemanticScholarTool(ResearchTool):
             logger.error("Semantic Scholar get_citations({}) failed: {}", paper_id, exc)
         return graph
 
-    async def get_references(
-        self, paper_id: str, *, limit: int = 50
-    ) -> CitationGraph:
+    async def get_references(self, paper_id: str, *, limit: int = 50) -> CitationGraph:
         """Get papers that this paper references.
 
         ``GET /paper/{paper_id}/references?fields={fields}&limit={limit}``

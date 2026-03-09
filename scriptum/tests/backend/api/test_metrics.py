@@ -2,7 +2,6 @@
 
 import uuid
 
-import pytest
 from backend.models.review import Metric, Review
 
 
@@ -44,8 +43,12 @@ class TestReviewMetricsEndpoint:
         await db_session.commit()
         await db_session.refresh(review)
 
-        m1 = Metric(metric_name="stage.desk_check.duration_ms", metric_value=500.0, review_id=review.id)
-        m2 = Metric(metric_name="stage.reviewing.duration_ms", metric_value=3000.0, review_id=review.id)
+        m1 = Metric(
+            metric_name="stage.desk_check.duration_ms", metric_value=500.0, review_id=review.id
+        )
+        m2 = Metric(
+            metric_name="stage.reviewing.duration_ms", metric_value=3000.0, review_id=review.id
+        )
         db_session.add_all([m1, m2])
         await db_session.commit()
 
@@ -70,10 +73,18 @@ class TestCostSummaryEndpoint:
         await db_session.commit()
         await db_session.refresh(review)
 
-        m1 = Metric(metric_name="agent.core_expert.llm_cost_usd", metric_value=0.05, review_id=review.id)
-        m2 = Metric(metric_name="agent.core_expert.llm_tokens", metric_value=500.0, review_id=review.id)
-        m3 = Metric(metric_name="agent.adjacent_expert.llm_cost_usd", metric_value=0.03, review_id=review.id)
-        m4 = Metric(metric_name="agent.adjacent_expert.llm_tokens", metric_value=300.0, review_id=review.id)
+        m1 = Metric(
+            metric_name="agent.core_expert.llm_cost_usd", metric_value=0.05, review_id=review.id
+        )
+        m2 = Metric(
+            metric_name="agent.core_expert.llm_tokens", metric_value=500.0, review_id=review.id
+        )
+        m3 = Metric(
+            metric_name="agent.adjacent_expert.llm_cost_usd", metric_value=0.03, review_id=review.id
+        )
+        m4 = Metric(
+            metric_name="agent.adjacent_expert.llm_tokens", metric_value=300.0, review_id=review.id
+        )
         db_session.add_all([m1, m2, m3, m4])
         await db_session.commit()
 

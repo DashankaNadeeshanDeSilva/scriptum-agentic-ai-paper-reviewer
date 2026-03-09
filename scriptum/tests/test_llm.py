@@ -8,7 +8,6 @@ import pytest
 
 from backend.core.llm import LLMClient, LLMError, LLMResponse
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -100,16 +99,12 @@ class TestLLMClientComplete:
     @pytest.mark.asyncio
     @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
     @patch("backend.core.llm.get_settings")
-    async def test_successful_completion(
-        self, mock_gs: MagicMock, mock_acomp: AsyncMock
-    ) -> None:
+    async def test_successful_completion(self, mock_gs: MagicMock, mock_acomp: AsyncMock) -> None:
         mock_gs.return_value = _mock_settings()
         mock_acomp.return_value = _mock_completion_response("hello")
 
         client = LLMClient()
-        resp = await client.complete(
-            messages=[{"role": "user", "content": "hi"}]
-        )
+        resp = await client.complete(messages=[{"role": "user", "content": "hi"}])
 
         assert isinstance(resp, LLMResponse)
         assert resp.text == "hello"
@@ -147,9 +142,7 @@ class TestLLMClientComplete:
         ]
 
         client = LLMClient(max_retries=3)
-        resp = await client.complete(
-            messages=[{"role": "user", "content": "test"}]
-        )
+        resp = await client.complete(messages=[{"role": "user", "content": "test"}])
 
         assert resp.text == "ok"
         assert mock_acomp.await_count == 3
@@ -176,9 +169,7 @@ class TestLLMClientComplete:
 
         client = LLMClient(max_retries=3)
         with pytest.raises(LLMError, match="failed after 3 retries"):
-            await client.complete(
-                messages=[{"role": "user", "content": "test"}]
-            )
+            await client.complete(messages=[{"role": "user", "content": "test"}])
 
         assert mock_acomp.await_count == 3
 
@@ -199,9 +190,7 @@ class TestLLMClientComplete:
 
         client = LLMClient()
         with pytest.raises(LLMError, match="invalid key"):
-            await client.complete(
-                messages=[{"role": "user", "content": "test"}]
-            )
+            await client.complete(messages=[{"role": "user", "content": "test"}])
 
         assert mock_acomp.await_count == 1  # No retry
 
@@ -215,9 +204,7 @@ class TestLLMClientStream:
     @pytest.mark.asyncio
     @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
     @patch("backend.core.llm.get_settings")
-    async def test_streaming_yields_chunks(
-        self, mock_gs: MagicMock, mock_acomp: AsyncMock
-    ) -> None:
+    async def test_streaming_yields_chunks(self, mock_gs: MagicMock, mock_acomp: AsyncMock) -> None:
         mock_gs.return_value = _mock_settings()
 
         # Build an async iterator of chunks
@@ -242,9 +229,7 @@ class TestLLMClientStream:
 
         client = LLMClient()
         collected = []
-        async for text in client.stream(
-            messages=[{"role": "user", "content": "test"}]
-        ):
+        async for text in client.stream(messages=[{"role": "user", "content": "test"}]):
             collected.append(text)
 
         assert collected == ["Hello", " world", "!"]
@@ -257,9 +242,7 @@ class TestLLMClientStream:
 
 class TestConfigResolution:
     @patch("backend.core.llm.get_settings")
-    def test_reads_default_provider_from_settings(
-        self, mock_gs: MagicMock
-    ) -> None:
+    def test_reads_default_provider_from_settings(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings(
             provider="openai", model="gpt-4-turbo", api_key="sk-test"
         )
@@ -268,9 +251,7 @@ class TestConfigResolution:
         assert client.model == "gpt-4-turbo"
 
     @patch("backend.core.llm.get_settings")
-    def test_explicit_params_override_settings(
-        self, mock_gs: MagicMock
-    ) -> None:
+    def test_explicit_params_override_settings(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings()
         client = LLMClient(
             provider="anthropic",

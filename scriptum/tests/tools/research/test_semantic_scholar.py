@@ -158,9 +158,7 @@ class TestSemanticScholarCitations:
         assert graph.references[0].title == "Seq2Seq"
 
     @pytest.mark.asyncio
-    async def test_get_citations_handles_error(
-        self, tool: SemanticScholarTool
-    ) -> None:
+    async def test_get_citations_handles_error(self, tool: SemanticScholarTool) -> None:
         with patch(
             "tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,

@@ -1,11 +1,9 @@
 """Tests for the review API endpoints."""
 
 import io
-from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 
 from backend.models.review import Feedback, File, Review

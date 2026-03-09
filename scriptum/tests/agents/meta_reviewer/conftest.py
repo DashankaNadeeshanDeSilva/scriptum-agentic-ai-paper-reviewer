@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -138,9 +138,7 @@ def sample_journal_config() -> dict:
     """Journal config matching a Nature-like journal."""
     return {
         "name": "Nature",
-        "scope": (
-            "Publishes outstanding research across all fields of science and technology."
-        ),
+        "scope": ("Publishes outstanding research across all fields of science and technology."),
         "formatting_rules": {
             "page_limit": 8,
             "citation_style": "Nature",
@@ -178,7 +176,12 @@ def sample_reviewer_results() -> list[dict]:
                 "reproducibility": "Hyperparameters given but code not released.",
             },
             "evidence": [
-                {"claim": "Novel attention mechanism", "source": "paper:section:3", "quote": "...", "relevance": 0.9}
+                {
+                    "claim": "Novel attention mechanism",
+                    "source": "paper:section:3",
+                    "quote": "...",
+                    "relevance": 0.9,
+                }
             ],
             "recommendation": "accept",
             "confidence": 0.85,

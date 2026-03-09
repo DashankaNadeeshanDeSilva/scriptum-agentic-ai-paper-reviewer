@@ -140,9 +140,7 @@ async def get_ollama_models(
             resp.raise_for_status()
             data = resp.json()
             models = [m["name"] for m in data.get("models", [])]
-            logger.debug(
-                "Found {} Ollama models (request {})", len(models), request_id
-            )
+            logger.debug("Found {} Ollama models (request {})", len(models), request_id)
             return {"models": models, "error": None}
     except Exception as exc:
         logger.warning("Failed to query Ollama models: {}", exc)

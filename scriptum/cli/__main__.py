@@ -105,7 +105,9 @@ def review(
     domain: str = typer.Option("machine learning", "--domain", "-d", help="Research domain"),
     provider: str = typer.Option("anthropic", "--provider", help="LLM provider"),
     model: str = typer.Option("claude-sonnet-4-6", "--model", help="LLM model name"),
-    server: str = typer.Option("http://localhost:8000", "--server", "-s", help="SCRIPTUM server URL"),
+    server: str = typer.Option(
+        "http://localhost:8000", "--server", "-s", help="SCRIPTUM server URL"
+    ),
 ) -> None:
     """Submit a paper for review (requires a running SCRIPTUM server)."""
     import httpx
@@ -152,10 +154,12 @@ def review(
                 f"[red]Cannot connect to SCRIPTUM server at {base}[/red]\n"
                 "Start the server first: [bold]scriptum start[/bold]"
             )
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
         except httpx.HTTPStatusError as exc:
-            console.print(f"[red]Server error:[/red] {exc.response.status_code} — {exc.response.text}")
-            raise typer.Exit(1)
+            console.print(
+                f"[red]Server error:[/red] {exc.response.status_code} — {exc.response.text}"
+            )
+            raise typer.Exit(1) from None
 
     review_id = review_data.get("review_id") or review_data.get("id")
     console.print(f"[green]Review started![/green] ID: {review_id}")
@@ -233,7 +237,7 @@ def doctor() -> None:
 
     # 1. Python version
     py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    if sys.version_info >= (3, 11):
+    if sys.version_info >= (3, 11):  # noqa: UP036
         table.add_row("Python", "[green]OK[/green]", py_ver)
     else:
         table.add_row("Python", "[red]FAIL[/red]", f"{py_ver} (need 3.11+)")
@@ -244,14 +248,18 @@ def doctor() -> None:
     if node_ver:
         table.add_row("Node.js", "[green]OK[/green]", node_ver.strip())
     else:
-        table.add_row("Node.js", "[yellow]SKIP[/yellow]", "Not found (optional, needed for frontend dev)")
+        table.add_row(
+            "Node.js", "[yellow]SKIP[/yellow]", "Not found (optional, needed for frontend dev)"
+        )
 
     # 3. Docker (optional)
     docker_ver = _check_command("docker", "--version")
     if docker_ver:
         table.add_row("Docker", "[green]OK[/green]", docker_ver.strip())
     else:
-        table.add_row("Docker", "[yellow]SKIP[/yellow]", "Not found (optional, needed for Docker deploy)")
+        table.add_row(
+            "Docker", "[yellow]SKIP[/yellow]", "Not found (optional, needed for Docker deploy)"
+        )
 
     # 4. Config file
     if CONFIG_PATH.exists():
@@ -306,10 +314,7 @@ def doctor() -> None:
     # 10. API key check
     import os
 
-    has_key = any(
-        os.getenv(k)
-        for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY")
-    )
+    has_key = any(os.getenv(k) for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"))
     if has_key:
         table.add_row("LLM API key", "[green]OK[/green]", "Found in environment")
     elif CONFIG_PATH.exists():

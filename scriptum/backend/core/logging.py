@@ -7,6 +7,7 @@ log rotation, and configurable log levels. Logs are stored in ~/.scriptum/logs/.
 import sys
 import uuid
 from contextvars import ContextVar
+from datetime import UTC
 from pathlib import Path
 
 from loguru import logger
@@ -21,10 +22,9 @@ LOG_DIR = Path.home() / ".scriptum" / "logs"
 def _serialize_record(record: dict) -> str:  # type: ignore[type-arg]
     """Format a log record as a JSON string for structured logging."""
     import json
-    from datetime import timezone
 
     subset = {
-        "timestamp": record["time"].astimezone(timezone.utc).isoformat(),
+        "timestamp": record["time"].astimezone(UTC).isoformat(),
         "level": record["level"].name,
         "message": record["message"],
         "module": record["module"],

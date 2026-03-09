@@ -15,15 +15,14 @@ asyncio.Queue that the WebSocket endpoint consumes.
 from __future__ import annotations
 
 import asyncio
+import time as _time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-
-import time as _time
 
 from agents.core.base import AgentInterface, ReviewResult, ReviewTask
 from backend.core.config import get_settings
@@ -38,6 +37,7 @@ from backend.schemas.review import (
     ReviewReport,
     ReviewScore,
 )
+
 # Lazy imports to avoid pulling in docling at module level:
 #   from backend.services.document import DocumentProcessingError, process_document
 #   from tools.document.models import ParsedDocument
@@ -274,7 +274,9 @@ async def _run_pipeline_stages(
     await _update_status(session, review_id, "processing")
     await _emit(
         review_id,
-        ReviewEvent(type="progress", step="document_processing", progress=0.0, message="Parsing document..."),
+        ReviewEvent(
+            type="progress", step="document_processing", progress=0.0, message="Parsing document..."
+        ),
     )
 
     _stage_start = _time.perf_counter()
@@ -285,13 +287,19 @@ async def _run_pipeline_stages(
         await _update_status(session, review_id, "failed")
         await _emit(
             review_id,
-            ReviewEvent(type="error", step="document_processing", message=f"Document parsing failed: {exc}"),
+            ReviewEvent(
+                type="error", step="document_processing", message=f"Document parsing failed: {exc}"
+            ),
         )
         return
 
     # Save paper title if extracted
     if parsed_document.metadata.title:
-        stmt = update(Review).where(Review.id == review_id).values(paper_title=parsed_document.metadata.title)
+        stmt = (
+            update(Review)
+            .where(Review.id == review_id)
+            .values(paper_title=parsed_document.metadata.title)
+        )
         await session.execute(stmt)
         await session.commit()
 
@@ -302,11 +310,16 @@ async def _run_pipeline_stages(
             step="document_processing",
             progress=0.15,
             message="Document parsed successfully.",
-            result={"title": parsed_document.metadata.title, "sections": len(parsed_document.sections)},
+            result={
+                "title": parsed_document.metadata.title,
+                "sections": len(parsed_document.sections),
+            },
         ),
     )
 
-    await _metrics.record_stage_timing(session, review_id, "document_processing", (_time.perf_counter() - _stage_start) * 1000)
+    await _metrics.record_stage_timing(
+        session, review_id, "document_processing", (_time.perf_counter() - _stage_start) * 1000
+    )
     await session.commit()
 
     _check_cancelled(review_id)
@@ -327,7 +340,13 @@ async def _run_pipeline_stages(
     await _update_status(session, review_id, "desk_check")
     await _emit(
         review_id,
-        ReviewEvent(type="progress", step="desk_check", agent="meta_reviewer", progress=0.2, message="Running desk check..."),
+        ReviewEvent(
+            type="progress",
+            step="desk_check",
+            agent="meta_reviewer",
+            progress=0.2,
+            message="Running desk check...",
+        ),
     )
 
     _stage_start = _time.perf_counter()
@@ -338,12 +357,21 @@ async def _run_pipeline_stages(
         await _update_status(session, review_id, "failed")
         await _emit(
             review_id,
-            ReviewEvent(type="error", step="desk_check", agent="meta_reviewer", message=f"Desk check failed: {exc}"),
+            ReviewEvent(
+                type="error",
+                step="desk_check",
+                agent="meta_reviewer",
+                message=f"Desk check failed: {exc}",
+            ),
         )
         return
 
     # Persist desk check result
-    stmt = update(Review).where(Review.id == review_id).values(desk_check_result=desk_check_result.model_dump())
+    stmt = (
+        update(Review)
+        .where(Review.id == review_id)
+        .values(desk_check_result=desk_check_result.model_dump())
+    )
     await session.execute(stmt)
     await session.commit()
 
@@ -359,7 +387,9 @@ async def _run_pipeline_stages(
         ),
     )
 
-    await _metrics.record_stage_timing(session, review_id, "desk_check", (_time.perf_counter() - _stage_start) * 1000)
+    await _metrics.record_stage_timing(
+        session, review_id, "desk_check", (_time.perf_counter() - _stage_start) * 1000
+    )
     await session.commit()
 
     _check_cancelled(review_id)
@@ -389,7 +419,12 @@ async def _run_pipeline_stages(
     await _update_status(session, review_id, "reviewing")
     await _emit(
         review_id,
-        ReviewEvent(type="progress", step="reviewing", progress=0.35, message="Starting independent reviews..."),
+        ReviewEvent(
+            type="progress",
+            step="reviewing",
+            progress=0.35,
+            message="Starting independent reviews...",
+        ),
     )
 
     _stage_start = _time.perf_counter()
@@ -412,7 +447,9 @@ async def _run_pipeline_stages(
             reviewer_type=result.reviewer_type,
             scores=result.scores,
             feedback=result.feedback,
-            evidence=[e.__dict__ if hasattr(e, "__dict__") else e for e in result.evidence] if result.evidence else [],
+            evidence=[e.__dict__ if hasattr(e, "__dict__") else e for e in result.evidence]
+            if result.evidence
+            else [],
         )
         session.add(reviewer_row)
     await session.commit()
@@ -459,7 +496,9 @@ async def _run_pipeline_stages(
         ),
     )
 
-    await _metrics.record_stage_timing(session, review_id, "reviewing", (_time.perf_counter() - _stage_start) * 1000)
+    await _metrics.record_stage_timing(
+        session, review_id, "reviewing", (_time.perf_counter() - _stage_start) * 1000
+    )
     await session.commit()
 
     _check_cancelled(review_id)
@@ -513,7 +552,9 @@ async def _run_pipeline_stages(
         ),
     )
 
-    await _metrics.record_stage_timing(session, review_id, "aggregation", (_time.perf_counter() - _stage_start) * 1000)
+    await _metrics.record_stage_timing(
+        session, review_id, "aggregation", (_time.perf_counter() - _stage_start) * 1000
+    )
     await session.commit()
 
     _check_cancelled(review_id)
@@ -521,7 +562,7 @@ async def _run_pipeline_stages(
     # -----------------------------------------------------------------------
     # Stage 6: Report Generation & Persistence
     # -----------------------------------------------------------------------
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stmt = (
         update(Review)
         .where(Review.id == review_id)
@@ -538,7 +579,9 @@ async def _run_pipeline_stages(
     await _metrics.record_stage_timing(session, review_id, "total", total_duration_ms)
     await session.commit()
 
-    logger.info("Review pipeline COMPLETED: review={} duration_ms={:.0f}", review_id, total_duration_ms)
+    logger.info(
+        "Review pipeline COMPLETED: review={} duration_ms={:.0f}", review_id, total_duration_ms
+    )
 
     await _emit(
         review_id,
@@ -637,7 +680,9 @@ async def _stage_parallel_review(
     input_data = task_dict
     timeout_seconds = float(get_settings().agents.timeout)
 
-    async def _run_single_reviewer(agent_name: str, agent: AgentInterface) -> ReviewResult | Exception:
+    async def _run_single_reviewer(
+        agent_name: str, agent: AgentInterface
+    ) -> ReviewResult | Exception:
         """Execute a single reviewer, returning Exception on failure."""
         try:
             await _emit(
@@ -651,9 +696,11 @@ async def _stage_parallel_review(
                 ),
             )
             try:
-                result_dict = await asyncio.wait_for(agent.execute(input_data), timeout=timeout_seconds)
-            except asyncio.TimeoutError:
-                raise AgentTimeoutError(agent_name, timeout_seconds)
+                result_dict = await asyncio.wait_for(
+                    agent.execute(input_data), timeout=timeout_seconds
+                )
+            except TimeoutError:
+                raise AgentTimeoutError(agent_name, timeout_seconds) from None
             review_result = ReviewResult(
                 reviewer_type=agent_name,
                 scores=result_dict.get("scores", {}),
@@ -687,16 +734,13 @@ async def _stage_parallel_review(
             return exc
 
     # Run all reviewers concurrently
-    tasks = [
-        _run_single_reviewer(name, agent)
-        for name, agent in reviewer_agents.items()
-    ]
+    tasks = [_run_single_reviewer(name, agent) for name, agent in reviewer_agents.items()]
     results = await asyncio.gather(*tasks, return_exceptions=False)
 
     completed_results: list[ReviewResult] = []
     failed_agents: dict[str, str] = {}
 
-    for name, result in zip(reviewer_agents.keys(), results):
+    for name, result in zip(reviewer_agents.keys(), results, strict=False):
         if isinstance(result, Exception):
             failed_agents[name] = str(result)
         else:
@@ -724,7 +768,7 @@ async def _stage_aggregation(
     input_data = {
         "mode": "aggregate",
         "reviewer_results": reviewer_reports_data,
-        "review_criteria": review_criteria or {}
+        "review_criteria": review_criteria or {},
     }
 
     result = await meta_reviewer.execute(input_data)
@@ -769,5 +813,5 @@ async def _stage_aggregation(
         suggested_improvements=result.get("suggested_improvements", []),
         individual_reviews=individual_reviews,
         desk_check=desk_check_result,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )

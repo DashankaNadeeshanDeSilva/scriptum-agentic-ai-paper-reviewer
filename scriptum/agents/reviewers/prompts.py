@@ -16,7 +16,8 @@ from agents.shared_prompts import DEBIASING_INSTRUCTIONS, EVIDENCE_REQUIREMENT, 
 # System prompts (one per reviewer type)
 # ---------------------------------------------------------------------------
 
-CORE_EXPERT_SYSTEM = """\
+CORE_EXPERT_SYSTEM = (
+    """\
 You are a Core Expert Reviewer for SCRIPTUM, an AI-assisted academic peer review system.
 
 Your role is that of a senior domain specialist — someone who has published extensively \
@@ -34,9 +35,14 @@ Core principles:
 - Be constructive: identify specific fixable issues, not just flaws.
 - You are INDEPENDENT — do not consider other reviewers' opinions.
 
-""" + DEBIASING_INSTRUCTIONS + "\n" + EVIDENCE_REQUIREMENT
+"""
+    + DEBIASING_INSTRUCTIONS
+    + "\n"
+    + EVIDENCE_REQUIREMENT
+)
 
-ADJACENT_EXPERT_SYSTEM = """\
+ADJACENT_EXPERT_SYSTEM = (
+    """\
 You are an Adjacent Expert Reviewer for SCRIPTUM, an AI-assisted academic peer review system.
 
 Your role is that of a researcher from a related but different field — someone who can \
@@ -54,9 +60,14 @@ Core principles:
 - Be constructive: identify specific fixable issues, not just flaws.
 - You are INDEPENDENT — do not consider other reviewers' opinions.
 
-""" + DEBIASING_INSTRUCTIONS + "\n" + EVIDENCE_REQUIREMENT
+"""
+    + DEBIASING_INSTRUCTIONS
+    + "\n"
+    + EVIDENCE_REQUIREMENT
+)
 
-METHODS_SPECIALIST_SYSTEM = """\
+METHODS_SPECIALIST_SYSTEM = (
+    """\
 You are a Methods Specialist Reviewer for SCRIPTUM, an AI-assisted academic peer review system.
 
 Your role is that of a statistician or methodologist — someone who scrutinises \
@@ -74,7 +85,11 @@ Core principles:
 - Be constructive: identify specific fixable issues, not just flaws.
 - You are INDEPENDENT — do not consider other reviewers' opinions.
 
-""" + DEBIASING_INSTRUCTIONS + "\n" + EVIDENCE_REQUIREMENT
+"""
+    + DEBIASING_INSTRUCTIONS
+    + "\n"
+    + EVIDENCE_REQUIREMENT
+)
 
 # ---------------------------------------------------------------------------
 # Shared task prompts (parameterised by reviewer perspective)
@@ -147,7 +162,8 @@ Respond with a JSON object:
 }}
 """
 
-EVALUATE_PROMPT = """\
+EVALUATE_PROMPT = (
+    """\
 Score this paper on the following review criteria based on your analysis.
 
 Your analysis:
@@ -158,7 +174,9 @@ Review criteria (category -> weight):
 
 Your focus areas: {focus_areas}
 
-""" + SCORING_RUBRIC + """
+"""
+    + SCORING_RUBRIC
+    + """
 
 For EACH score, you MUST provide:
 1. A specific justification citing paper sections or research findings
@@ -192,6 +210,7 @@ Respond with a JSON object:
 Give more detailed attention to your focus areas ({focus_areas}), \
 but provide honest scores for all categories.
 """
+)
 
 GENERATE_FEEDBACK_PROMPT = """\
 Generate a structured review with your final recommendation.

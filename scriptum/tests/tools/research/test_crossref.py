@@ -12,9 +12,7 @@ from tools.research.crossref import CrossRefTool
 
 class TestCrossRefSearch:
     @pytest.mark.asyncio
-    async def test_search_returns_results(
-        self, sample_crossref_search_response: dict
-    ) -> None:
+    async def test_search_returns_results(self, sample_crossref_search_response: dict) -> None:
         mock_resp = MagicMock(spec=httpx.Response)
         mock_resp.status_code = 200
         mock_resp.json.return_value = sample_crossref_search_response
@@ -72,9 +70,7 @@ class TestCrossRefSearch:
 
 class TestCrossRefVerifyDoi:
     @pytest.mark.asyncio
-    async def test_verify_doi_found(
-        self, sample_crossref_work_response: dict
-    ) -> None:
+    async def test_verify_doi_found(self, sample_crossref_work_response: dict) -> None:
         mock_resp = MagicMock(spec=httpx.Response)
         mock_resp.status_code = 200
         mock_resp.json.return_value = sample_crossref_work_response
