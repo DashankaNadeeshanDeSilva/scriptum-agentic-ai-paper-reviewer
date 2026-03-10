@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -14,7 +17,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Python packaging artifacts (but not frontend src/lib/)
+/lib/
 lib64/
 parts/
 sdist/
@@ -205,3 +209,23 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Docker environment (contains credentials)
+scriptum/docker/.env
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+.env.local
+.env*.local
+
+# Project Documentation (keep local only)
+Docs/
+AGENTS.md
+
+# Build-generated README copy (original is at repo root)
+scriptum/README.md
+
+# Claude Code (skills, settings, plans — local only)
+.claude/

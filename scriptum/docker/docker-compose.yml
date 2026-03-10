@@ -1,0 +1,64 @@
+# SCRIPTUM Docker Compose — Full Development Stack
+# Usage: docker compose -f docker/docker-compose.yml up --build
+
+services:
+  # ── Backend (FastAPI) ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ../..
+      dockerfile: scriptum/docker/Dockerfile.backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-scriptum}:${POSTGRES_PASSWORD:-scriptum}@db:5432/${POSTGRES_DB:-scriptum}
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - scriptum_config:/root/.scriptum
+      - docling_models:/root/.cache/huggingface
+    restart: unless-stopped
+
+  # ── Frontend (Next.js) ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../..
+      dockerfile: scriptum/docker/Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-scriptum}
+      POSTGRES_USER: ${POSTGRES_USER:-scriptum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scriptum}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scriptum} -d ${POSTGRES_DB:-scriptum}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ChromaDB runs embedded (PersistentClient) — no external service needed.
+  # Data is stored at ~/.scriptum/chroma/ inside the backend container.
+
+volumes:
+  postgres_data:
+  scriptum_config:
+  docling_models:

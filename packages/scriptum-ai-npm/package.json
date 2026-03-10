@@ -1,0 +1,36 @@
+{
+  "name": "scriptum-ai",
+  "version": "0.1.0",
+  "description": "SCRIPTUM - Agentic AI Academic Paper Review System. Runs a multi-agent peer review pipeline on your research manuscripts.",
+  "keywords": [
+    "ai",
+    "peer-review",
+    "academic",
+    "llm",
+    "agents",
+    "paper-review",
+    "langraph",
+    "multi-agent"
+  ],
+  "license": "MIT",
+  "author": "Dashanka De Silva",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer"
+  },
+  "homepage": "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer#readme",
+  "bugs": {
+    "url": "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer/issues"
+  },
+  "bin": {
+    "scriptum-ai": "./bin/cli.js"
+  },
+  "files": [
+    "bin/cli.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

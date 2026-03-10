@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+dist/
+build/
+
+# Node
+scriptum/frontend/node_modules
+scriptum/frontend/.next
+scriptum/frontend/.env.local
+
+# IDE
+.vscode
+.idea
+.claude
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker env (contains credentials)
+scriptum/docker/.env
+
+# Docs (not needed in containers)
+Docs/
+
+# Tests (optional in production)
+scriptum/tests/

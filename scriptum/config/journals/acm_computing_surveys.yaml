@@ -1,0 +1,53 @@
+name: "ACM Computing Surveys"
+scope: >
+  Publishes comprehensive, readable tutorials and survey papers that
+  provide guided tours of the literature and explain topics to those
+  seeking to learn about areas outside their specialties, as well as
+  those seeking state-of-the-art knowledge within their domains.
+review_criteria:
+  coverage:
+    weight: 0.30
+    description: >
+      Comprehensiveness of the literature survey. Must cover seminal
+      works, recent advances, and competing approaches fairly.
+  organization:
+    weight: 0.25
+    description: >
+      Logical structure, clear taxonomy or categorization of approaches,
+      and effective use of comparison tables and figures.
+  analysis:
+    weight: 0.20
+    description: >
+      Depth of critical analysis comparing approaches. Must go beyond
+      listing papers to identify trends, gaps, and open problems.
+  clarity:
+    weight: 0.15
+    description: >
+      Writing quality, accessibility to non-experts, and effective
+      use of examples and illustrations.
+  timeliness:
+    weight: 0.10
+    description: >
+      Currency of the survey. Must include relevant work up to the
+      submission date and discuss emerging directions.
+formatting_rules:
+  page_limit: 50
+  citation_style: "ACM"
+  double_blind: true
+  abstract_word_limit: 250
+  required_sections:
+    - Abstract
+    - Introduction
+    - Background
+    - Taxonomy
+    - Analysis
+    - Open Problems
+    - Conclusion
+  supplementary_allowed: true
+ethics_policy: >
+  Authors must declare any conflicts of interest, especially when
+  surveying their own work. Fair and balanced treatment of all
+  approaches is expected.
+review_timeline:
+  first_decision: "12-16 weeks"
+  revision_period: "8-12 weeks"

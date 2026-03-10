@@ -1,0 +1,152 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scriptum-ai"
+version = "0.1.0"
+description = "SCRIPTUM - Agentic AI Academic Paper Review System"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "SCRIPTUM Contributors" },
+]
+keywords = ["ai", "peer-review", "academic", "llm", "agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: FastAPI",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+dependencies = [
+    # Core API Framework
+    "fastapi>=0.109.0,<1.0",
+    "uvicorn[standard]>=0.27.0,<1.0",
+    "python-multipart>=0.0.6,<1.0",
+
+    # Data Validation & Settings
+    "pydantic>=2.6.0,<3.0",
+    "pydantic-settings>=2.1.0,<3.0",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0.25,<3.0",
+    "aiosqlite>=0.19.0,<1.0",
+    "asyncpg>=0.29.0,<1.0",
+    "alembic>=1.13.0,<2.0",
+
+    # Agent Framework (rapidly evolving — pin tightly)
+    "langgraph>=0.0.20,<1.0",
+    "langchain>=0.1.0,<1.0",
+    "langchain-core>=0.1.0,<1.0",
+
+    # LLM Gateway
+    "litellm>=1.17.0,<2.0",
+
+    # Vector Store & Embeddings
+    "chromadb>=0.4.22,<1.0",
+
+    # Document Processing (Docling - IBM)
+    "docling>=2.75.0,<3.0",
+    "docling-core>=2.20.0,<3.0",
+
+    # Research APIs
+    "arxiv>=2.1.0,<3.0",
+
+    # Utilities
+    "loguru>=0.7.2,<1.0",
+    "pyyaml>=6.0.1,<7.0",
+    "cryptography>=42.0.0,<45.0",
+    "python-dotenv>=1.0.0,<2.0",
+    "typer>=0.9.0,<1.0",
+    "rich>=13.7.0,<14.0",
+
+    # HTTP Client
+    "httpx>=0.26.0,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+
+    # Linting & Formatting
+    "ruff>=0.1.14",
+    "mypy>=1.8.0",
+
+    # Type Stubs
+    "types-pyyaml>=6.0.12",
+]
+
+[project.scripts]
+scriptum = "cli.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer"
+Repository = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer"
+Issues = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend", "agents", "tools", "cli", "config"]
+
+# Custom build hook conditionally includes frontend/out when present
+[tool.hatch.build.hooks.custom]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # Depends() in argument defaults (standard FastAPI pattern)
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "langgraph.*",
+    "langchain.*",
+    "langchain_core.*",
+    "litellm.*",
+    "chromadb.*",
+    "arxiv.*",
+    "docling.*",
+    "docling_core.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
