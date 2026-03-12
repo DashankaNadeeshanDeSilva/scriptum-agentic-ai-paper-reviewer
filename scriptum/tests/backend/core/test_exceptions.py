@@ -2,7 +2,7 @@
 
 import pytest
 
-from backend.core.exceptions import (
+from scriptum_ai.backend.core.exceptions import (
     AgentError,
     AgentTimeoutError,
     ConfigError,

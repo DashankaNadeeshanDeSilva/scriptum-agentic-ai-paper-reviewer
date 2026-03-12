@@ -49,14 +49,14 @@ jobs:
         run: ruff format --check .
 
       - name: Mypy type check
-        run: mypy backend/ agents/ tools/ cli/ --ignore-missing-imports
+        run: mypy scriptum_ai/ --ignore-missing-imports
 
       - name: Run tests
         run: |
           pytest \
             --ignore=tests/backend/services/test_document.py \
             -k "not TestFullPipeline" \
-            --cov=backend --cov=agents --cov=tools --cov=cli \
+            --cov=scriptum_ai \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
             -q

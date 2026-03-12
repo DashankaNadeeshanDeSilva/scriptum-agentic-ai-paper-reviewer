@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 
-from tools.document.models import Reference
-from tools.document.reference_resolver import (
+from scriptum_ai.tools.document.models import Reference
+from scriptum_ai.tools.document.reference_resolver import (
     _crossref_lookup,
     resolve_references,
 )
@@ -48,7 +48,7 @@ class TestResolveReferences:
     async def test_llm_phase_called_when_use_llm_true(self):
         refs = [_make_ref("Smith et al. 2020")]
         with patch(
-            "tools.document.reference_resolver._llm_structure_references",
+            "scriptum_ai.tools.document.reference_resolver._llm_structure_references",
             new_callable=AsyncMock,
             return_value=refs,
         ) as mock_llm:
@@ -59,12 +59,12 @@ class TestResolveReferences:
         refs = [_make_ref("Smith et al. 2020")]
         with (
             patch(
-                "tools.document.reference_resolver._llm_structure_references",
+                "scriptum_ai.tools.document.reference_resolver._llm_structure_references",
                 new_callable=AsyncMock,
                 return_value=refs,
             ),
             patch(
-                "tools.document.reference_resolver._api_enrich_references",
+                "scriptum_ai.tools.document.reference_resolver._api_enrich_references",
                 new_callable=AsyncMock,
                 return_value=refs,
             ) as mock_api,
@@ -103,7 +103,7 @@ class TestLLMStructuring:
         mock_client = AsyncMock()
         mock_client.complete = AsyncMock(return_value=_llm_response_json(llm_result))
 
-        with patch("backend.core.llm.LLMClient", return_value=mock_client):
+        with patch("scriptum_ai.backend.core.llm.LLMClient", return_value=mock_client):
             result = await resolve_references(refs, use_llm=True, use_apis=False)
 
         assert result[0].title == "Attention Is All You Need"
@@ -126,7 +126,7 @@ class TestLLMStructuring:
         mock_client = AsyncMock()
         mock_client.complete = AsyncMock(return_value=_llm_response_json(llm_result))
 
-        with patch("backend.core.llm.LLMClient", return_value=mock_client):
+        with patch("scriptum_ai.backend.core.llm.LLMClient", return_value=mock_client):
             result = await resolve_references(refs, use_llm=True, use_apis=False)
 
         # First ref should be unchanged
@@ -144,7 +144,7 @@ class TestLLMStructuring:
         mock_client = AsyncMock()
         mock_client.complete = AsyncMock(return_value=mock_resp)
 
-        with patch("backend.core.llm.LLMClient", return_value=mock_client):
+        with patch("scriptum_ai.backend.core.llm.LLMClient", return_value=mock_client):
             result = await resolve_references(refs, use_llm=True, use_apis=False)
 
         # Should not crash, ref stays unresolved
@@ -159,7 +159,7 @@ class TestLLMStructuring:
         mock_client = AsyncMock()
         mock_client.complete = AsyncMock(return_value=mock_resp)
 
-        with patch("backend.core.llm.LLMClient", return_value=mock_client):
+        with patch("scriptum_ai.backend.core.llm.LLMClient", return_value=mock_client):
             result = await resolve_references(refs, use_llm=True, use_apis=False)
 
         assert not result[0].resolved
@@ -171,7 +171,7 @@ class TestLLMStructuring:
         mock_client = AsyncMock()
         mock_client.complete = AsyncMock(side_effect=RuntimeError("LLM down"))
 
-        with patch("backend.core.llm.LLMClient", return_value=mock_client):
+        with patch("scriptum_ai.backend.core.llm.LLMClient", return_value=mock_client):
             result = await resolve_references(refs, use_llm=True, use_apis=False)
 
         assert not result[0].resolved
@@ -186,7 +186,7 @@ class TestLLMStructuring:
         mock_client = AsyncMock()
         mock_client.complete = AsyncMock(return_value=_llm_response_json(llm_result))
 
-        with patch("backend.core.llm.LLMClient", return_value=mock_client):
+        with patch("scriptum_ai.backend.core.llm.LLMClient", return_value=mock_client):
             result = await resolve_references(refs, use_llm=True, use_apis=False)
 
         # First ref (empty raw_text) should be unresolved
@@ -220,7 +220,7 @@ class TestCrossRefEnrichment:
 
         mock_response = httpx.Response(200, json=crossref_response)
 
-        with patch("tools.document.reference_resolver.httpx.AsyncClient") as MockClient:
+        with patch("scriptum_ai.tools.document.reference_resolver.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -237,7 +237,7 @@ class TestCrossRefEnrichment:
     async def test_skips_refs_without_title(self):
         ref = _make_ref("raw text only, no title")
 
-        with patch("tools.document.reference_resolver.httpx.AsyncClient") as MockClient:
+        with patch("scriptum_ai.tools.document.reference_resolver.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=False)
@@ -252,7 +252,7 @@ class TestCrossRefEnrichment:
     async def test_skips_refs_that_already_have_doi(self):
         ref = _make_ref("", title="Some Paper", doi="10.1234/existing")
 
-        with patch("tools.document.reference_resolver.httpx.AsyncClient") as MockClient:
+        with patch("scriptum_ai.tools.document.reference_resolver.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=False)

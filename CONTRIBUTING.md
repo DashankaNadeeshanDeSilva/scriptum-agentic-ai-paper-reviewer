@@ -63,7 +63,7 @@ ruff check .
 ruff format --check .
 
 # Type checking
-mypy backend/ agents/ tools/ cli/
+mypy scriptum_ai/
 cd frontend && npx tsc --noEmit
 ```
 
@@ -106,24 +106,24 @@ test: add integration tests for file upload
 ## Architecture Guidelines
 
 - **Agent independence**: Reviewer agents must never share state until Meta Reviewer aggregation
-- **Adapter pattern**: New agent frameworks should implement the `AgentInterface` ABC in `agents/core/base.py`
+- **Adapter pattern**: New agent frameworks should implement the `AgentInterface` ABC in `scriptum_ai/agents/core/base.py`
 - **Research tools**: Extend the `ResearchTool` base class with async `search()` method
-- **Error handling**: Raise `ScriptumError` subclasses (see `backend/core/exceptions.py`)
+- **Error handling**: Raise `ScriptumError` subclasses (see `scriptum_ai/backend/core/exceptions.py`)
 - **Config resolution**: Environment variables > `~/.scriptum/config.yaml` > built-in defaults
 
 ## Adding a New Reviewer Agent
 
-1. Create `agents/reviewers/your_reviewer.py` subclassing `BaseReviewer`
-2. Define its system prompt in `agents/reviewers/prompts.py`
-3. Register it in `agents/core/factory.py`
-4. Add it to the orchestrator's reviewer list in `backend/services/orchestrator.py`
+1. Create `scriptum_ai/agents/reviewers/your_reviewer.py` subclassing `BaseReviewer`
+2. Define its system prompt in `scriptum_ai/agents/reviewers/prompts.py`
+3. Register it in `scriptum_ai/agents/core/factory.py`
+4. Add it to the orchestrator's reviewer list in `scriptum_ai/backend/services/orchestrator.py`
 5. Write tests in `tests/agents/reviewers/`
 
 ## Adding a New Research Tool
 
-1. Create `tools/research/your_tool.py` extending `ResearchTool`
+1. Create `scriptum_ai/tools/research/your_tool.py` extending `ResearchTool`
 2. Implement `async search(query, max_results, **kwargs) -> list[dict]`
-3. Add configuration entries in `config/config.yaml`
+3. Add configuration entries in `scriptum_ai/config/config.yaml`
 4. Register the tool in agent tool lists
 5. Write tests in `tests/tools/research/`
 

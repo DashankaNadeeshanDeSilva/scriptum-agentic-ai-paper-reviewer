@@ -11,15 +11,15 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from backend.api.deps import get_db
-from backend.core.database import Base
+from scriptum_ai.backend.api.deps import get_db
+from scriptum_ai.backend.core.database import Base
 
 
 @pytest.fixture
 def tmp_upload_dir(monkeypatch, tmp_path):
     """Override UPLOAD_DIR to use a temp directory."""
-    import backend.api.v1.files as files_mod
-    import backend.api.v1.reviews as reviews_mod
+    import scriptum_ai.backend.api.v1.files as files_mod
+    import scriptum_ai.backend.api.v1.reviews as reviews_mod
 
     upload_dir = tmp_path / "uploads"
     upload_dir.mkdir()
@@ -49,7 +49,7 @@ async def db_session():
 @pytest_asyncio.fixture
 async def client(db_session, tmp_upload_dir):
     """Create an httpx AsyncClient with dependency overrides."""
-    from backend.main import app
+    from scriptum_ai.backend.main import app
 
     async def _override_get_db():
         yield db_session

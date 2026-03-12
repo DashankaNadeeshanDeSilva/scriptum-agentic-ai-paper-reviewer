@@ -7,18 +7,20 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from tools.research.google_search import GoogleSearchTool
+from scriptum_ai.tools.research.google_search import GoogleSearchTool
 
 
 @pytest.fixture
 def tool(mock_settings: MagicMock):
-    with patch("tools.research.google_search.get_settings", return_value=mock_settings):
+    with patch("scriptum_ai.tools.research.google_search.get_settings", return_value=mock_settings):
         return GoogleSearchTool()
 
 
 @pytest.fixture
 def tool_no_key(mock_settings_no_keys: MagicMock):
-    with patch("tools.research.google_search.get_settings", return_value=mock_settings_no_keys):
+    with patch(
+        "scriptum_ai.tools.research.google_search.get_settings", return_value=mock_settings_no_keys
+    ):
         return GoogleSearchTool()
 
 
@@ -33,7 +35,7 @@ class TestGoogleSearchSearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.google_search.http_request_with_retry",
+            "scriptum_ai.tools.research.google_search.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -63,7 +65,7 @@ class TestGoogleSearchSearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.google_search.http_request_with_retry",
+            "scriptum_ai.tools.research.google_search.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -73,7 +75,7 @@ class TestGoogleSearchSearch:
     @pytest.mark.asyncio
     async def test_search_handles_exception(self, tool: GoogleSearchTool) -> None:
         with patch(
-            "tools.research.google_search.http_request_with_retry",
+            "scriptum_ai.tools.research.google_search.http_request_with_retry",
             new_callable=AsyncMock,
             side_effect=httpx.TimeoutException("Request timed out"),
         ):
@@ -88,7 +90,7 @@ class TestGoogleSearchSearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.google_search.http_request_with_retry",
+            "scriptum_ai.tools.research.google_search.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ) as mock_req:

@@ -62,7 +62,7 @@ npm install
 
 # Start both (in separate terminals)
 # Terminal 1: Backend
-cd scriptum && uvicorn backend.main:app --reload --port 8000
+cd scriptum && uvicorn scriptum_ai.backend.main:app --reload --port 8000
 
 # Terminal 2: Frontend
 cd scriptum/frontend && npm run dev
@@ -85,7 +85,7 @@ Built-in defaults      (lowest priority)
 On first run, SCRIPTUM creates `~/.scriptum/config.yaml`. You can also copy the template:
 
 ```bash
-cp scriptum/config/config.yaml ~/.scriptum/config.yaml
+cp scriptum/scriptum_ai/config/config.yaml ~/.scriptum/config.yaml
 ```
 
 ### Full Configuration Reference
@@ -239,13 +239,13 @@ Pre-configured review criteria for:
 
 | Journal | Config File |
 |---------|------------|
-| AAAI | `config/journals/aaai.yaml` |
-| ACM Computing Surveys | `config/journals/acm.yaml` |
-| IEEE TASLP | `config/journals/ieee.yaml` |
-| Nature | `config/journals/nature.yaml` |
-| NeurIPS | `config/journals/neurips.yaml` |
+| AAAI | `scriptum_ai/config/journals/aaai.yaml` |
+| ACM Computing Surveys | `scriptum_ai/config/journals/acm.yaml` |
+| IEEE TASLP | `scriptum_ai/config/journals/ieee.yaml` |
+| Nature | `scriptum_ai/config/journals/nature.yaml` |
+| NeurIPS | `scriptum_ai/config/journals/neurips.yaml` |
 
-Custom journals can be added by creating a new YAML file in `config/journals/`.
+Custom journals can be added by creating a new YAML file in `scriptum_ai/config/journals/`.
 
 ## Troubleshooting
 

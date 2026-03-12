@@ -2,7 +2,7 @@
 
 import uuid
 
-from backend.models.review import Metric, Review
+from scriptum_ai.backend.models.review import Metric, Review
 
 
 class TestMetricsDashboardEndpoint:

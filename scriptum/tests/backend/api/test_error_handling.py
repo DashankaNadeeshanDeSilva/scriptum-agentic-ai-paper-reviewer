@@ -8,7 +8,7 @@ Uses the ``client`` fixture from conftest.py (in-memory SQLite + ASGI client).
 
 import uuid
 
-from backend.models.review import Review
+from scriptum_ai.backend.models.review import Review
 
 
 class TestGlobalExceptionHandlers:

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.research.arxiv import ArxivTool
+from scriptum_ai.tools.research.arxiv import ArxivTool
 
 
 def _make_arxiv_result(
@@ -37,7 +37,7 @@ def _make_arxiv_result(
 
 class TestArxivToolSearch:
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_search_returns_results(self, mock_arxiv_mod: MagicMock) -> None:
         mock_client = MagicMock()
         mock_arxiv_mod.Client.return_value = mock_client
@@ -70,7 +70,7 @@ class TestArxivToolSearch:
         assert results == []
 
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_search_caps_max_results(self, mock_arxiv_mod: MagicMock) -> None:
         mock_client = MagicMock()
         mock_arxiv_mod.Client.return_value = mock_client
@@ -86,7 +86,7 @@ class TestArxivToolSearch:
         assert call_kwargs.kwargs.get("max_results", call_kwargs[1].get("max_results")) <= 100
 
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_search_handles_exception(self, mock_arxiv_mod: MagicMock) -> None:
         mock_arxiv_mod.Client.side_effect = Exception("Network error")
 
@@ -95,7 +95,7 @@ class TestArxivToolSearch:
         assert results == []
 
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_search_sort_by_submitted(self, mock_arxiv_mod: MagicMock) -> None:
         mock_client = MagicMock()
         mock_arxiv_mod.Client.return_value = mock_client
@@ -112,7 +112,7 @@ class TestArxivToolSearch:
 
 class TestArxivToolGetPaper:
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_get_paper_found(self, mock_arxiv_mod: MagicMock) -> None:
         mock_client = MagicMock()
         mock_arxiv_mod.Client.return_value = mock_client
@@ -129,7 +129,7 @@ class TestArxivToolGetPaper:
         assert paper.source == "arxiv"
 
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_get_paper_not_found(self, mock_arxiv_mod: MagicMock) -> None:
         mock_client = MagicMock()
         mock_arxiv_mod.Client.return_value = mock_client
@@ -141,7 +141,7 @@ class TestArxivToolGetPaper:
         assert paper is None
 
     @pytest.mark.asyncio
-    @patch("tools.research.arxiv.arxiv")
+    @patch("scriptum_ai.tools.research.arxiv.arxiv")
     async def test_get_paper_handles_exception(self, mock_arxiv_mod: MagicMock) -> None:
         mock_arxiv_mod.Client.side_effect = Exception("API error")
 

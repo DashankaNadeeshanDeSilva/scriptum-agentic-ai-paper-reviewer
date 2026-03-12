@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from tools.research.crossref import CrossRefTool
+from scriptum_ai.tools.research.crossref import CrossRefTool
 
 
 class TestCrossRefSearch:
@@ -20,7 +20,7 @@ class TestCrossRefSearch:
 
         tool = CrossRefTool()
         with patch(
-            "tools.research.crossref.http_request_with_retry",
+            "scriptum_ai.tools.research.crossref.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -44,7 +44,7 @@ class TestCrossRefSearch:
     async def test_search_handles_exception(self) -> None:
         tool = CrossRefTool()
         with patch(
-            "tools.research.crossref.http_request_with_retry",
+            "scriptum_ai.tools.research.crossref.http_request_with_retry",
             new_callable=AsyncMock,
             side_effect=httpx.ConnectError("Network error"),
         ):
@@ -60,7 +60,7 @@ class TestCrossRefSearch:
 
         tool = CrossRefTool()
         with patch(
-            "tools.research.crossref.http_request_with_retry",
+            "scriptum_ai.tools.research.crossref.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -150,7 +150,7 @@ class TestCrossRefSearchByTitle:
         tool = CrossRefTool()
 
         with patch(
-            "tools.research.crossref.http_request_with_retry",
+            "scriptum_ai.tools.research.crossref.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=search_resp,
         ):
@@ -175,7 +175,7 @@ class TestCrossRefSearchByTitle:
 
         tool = CrossRefTool()
         with patch(
-            "tools.research.crossref.http_request_with_retry",
+            "scriptum_ai.tools.research.crossref.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):

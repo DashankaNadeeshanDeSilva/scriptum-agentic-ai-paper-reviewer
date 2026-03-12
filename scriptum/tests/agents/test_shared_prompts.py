@@ -1,6 +1,10 @@
 """Tests for shared prompt constants and their integration into agent prompts."""
 
-from agents.shared_prompts import DEBIASING_INSTRUCTIONS, EVIDENCE_REQUIREMENT, SCORING_RUBRIC
+from scriptum_ai.agents.shared_prompts import (
+    DEBIASING_INSTRUCTIONS,
+    EVIDENCE_REQUIREMENT,
+    SCORING_RUBRIC,
+)
 
 
 class TestSharedPromptConstants:
@@ -24,7 +28,7 @@ class TestSharedPromptConstants:
 
 class TestReviewerPromptsIntegration:
     def test_reviewer_system_prompts_include_debiasing(self):
-        from agents.reviewers.prompts import (
+        from scriptum_ai.agents.reviewers.prompts import (
             ADJACENT_EXPERT_SYSTEM,
             CORE_EXPERT_SYSTEM,
             METHODS_SPECIALIST_SYSTEM,
@@ -35,18 +39,18 @@ class TestReviewerPromptsIntegration:
             assert "Evidence Requirement" in prompt
 
     def test_evaluate_prompt_includes_scoring_rubric(self):
-        from agents.reviewers.prompts import EVALUATE_PROMPT
+        from scriptum_ai.agents.reviewers.prompts import EVALUATE_PROMPT
 
         assert "Calibration" in EVALUATE_PROMPT
         assert "0-1" in EVALUATE_PROMPT
 
     def test_meta_reviewer_includes_debiasing(self):
-        from agents.meta_reviewer.prompts import META_REVIEWER_SYSTEM
+        from scriptum_ai.agents.meta_reviewer.prompts import META_REVIEWER_SYSTEM
 
         assert "Prestige bias" in META_REVIEWER_SYSTEM
 
     def test_aggregation_includes_scoring_and_anti_anchoring(self):
-        from agents.meta_reviewer.prompts import AGGREGATION_SYNTHESIZE
+        from scriptum_ai.agents.meta_reviewer.prompts import AGGREGATION_SYNTHESIZE
 
         assert "Calibration" in AGGREGATION_SYNTHESIZE
         assert "Anti-anchoring" in AGGREGATION_SYNTHESIZE

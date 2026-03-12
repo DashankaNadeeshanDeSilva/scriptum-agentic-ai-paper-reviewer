@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agents.meta_reviewer.prompts import (
+from scriptum_ai.agents.meta_reviewer.prompts import (
     AGGREGATION_ANALYZE,
     AGGREGATION_REPORT,
     AGGREGATION_SYNTHESIZE,

@@ -11,11 +11,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentConfig
-from agents.reviewers.adjacent_expert import AdjacentExpertAgent
-from agents.reviewers.core_expert import CoreExpertAgent
-from agents.reviewers.methods_specialist import MethodsSpecialistAgent
-from agents.reviewers.prompts import (
+from scriptum_ai.agents.core.base import AgentConfig
+from scriptum_ai.agents.reviewers.adjacent_expert import AdjacentExpertAgent
+from scriptum_ai.agents.reviewers.core_expert import CoreExpertAgent
+from scriptum_ai.agents.reviewers.methods_specialist import MethodsSpecialistAgent
+from scriptum_ai.agents.reviewers.prompts import (
     ADJACENT_EXPERT_SYSTEM,
     CORE_EXPERT_SYSTEM,
     METHODS_SPECIALIST_SYSTEM,
@@ -112,7 +112,7 @@ class TestCoreExpert:
         mock_llm = AsyncMock()
         mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in _all_responses()])
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -152,7 +152,7 @@ class TestAdjacentExpert:
         mock_llm = AsyncMock()
         mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in _all_responses()])
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(AdjacentExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -192,7 +192,7 @@ class TestMethodsSpecialist:
         mock_llm = AsyncMock()
         mock_llm.complete = AsyncMock(side_effect=[_make_llm_response(r) for r in _all_responses()])
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(MethodsSpecialistAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -216,10 +216,10 @@ class TestToolCreation:
         with patch.dict(
             "sys.modules",
             {
-                "tools.research.perplexity": None,
-                "tools.research.arxiv": None,
-                "tools.research.semantic_scholar": None,
-                "tools.knowledge.rag": None,
+                "scriptum_ai.tools.research.perplexity": None,
+                "scriptum_ai.tools.research.arxiv": None,
+                "scriptum_ai.tools.research.semantic_scholar": None,
+                "scriptum_ai.tools.knowledge.rag": None,
             },
         ):
             tools = agent._create_tools()
@@ -230,9 +230,9 @@ class TestToolCreation:
         with patch.dict(
             "sys.modules",
             {
-                "tools.research.perplexity": None,
-                "tools.research.google_search": None,
-                "tools.knowledge.rag": None,
+                "scriptum_ai.tools.research.perplexity": None,
+                "scriptum_ai.tools.research.google_search": None,
+                "scriptum_ai.tools.knowledge.rag": None,
             },
         ):
             tools = agent._create_tools()
@@ -243,9 +243,9 @@ class TestToolCreation:
         with patch.dict(
             "sys.modules",
             {
-                "tools.research.perplexity": None,
-                "tools.research.semantic_scholar": None,
-                "tools.knowledge.rag": None,
+                "scriptum_ai.tools.research.perplexity": None,
+                "scriptum_ai.tools.research.semantic_scholar": None,
+                "scriptum_ai.tools.knowledge.rag": None,
             },
         ):
             tools = agent._create_tools()

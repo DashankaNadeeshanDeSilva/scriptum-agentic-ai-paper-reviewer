@@ -15,14 +15,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from scriptum_ai.tools.document.latex_parser import parse_latex
+from scriptum_ai.tools.document.models import ParsedDocument
 from tests.tools.document.mock_docling import (
     FakeDoclingDocument,
     FakeSectionHeaderItem,
     FakeTextItem,
     FakeTitleItem,
 )
-from tools.document.latex_parser import parse_latex
-from tools.document.models import ParsedDocument
 
 
 class TestParseLatex:
@@ -46,7 +46,7 @@ class TestParseLatex:
             markdown="# LaTeX Paper\n\n## Introduction\n\nThis is written in LaTeX.",
         )
 
-        with patch("tools.document.latex_parser._convert_latex", return_value=mock_doc):
+        with patch("scriptum_ai.tools.document.latex_parser._convert_latex", return_value=mock_doc):
             result = await parse_latex(tex_file)
 
         assert isinstance(result, ParsedDocument)
@@ -61,7 +61,7 @@ class TestParseLatex:
 
         mock_doc = FakeDoclingDocument(items=[], pages={}, markdown="")
 
-        with patch("tools.document.latex_parser._convert_latex", return_value=mock_doc):
+        with patch("scriptum_ai.tools.document.latex_parser._convert_latex", return_value=mock_doc):
             result = await parse_latex(tex_file)
 
         assert result.metadata.source_format == "latex"
@@ -73,7 +73,7 @@ class TestParseLatex:
 
         mock_doc = FakeDoclingDocument(items=[], pages={}, markdown="")
 
-        with patch("tools.document.latex_parser._convert_latex", return_value=mock_doc):
+        with patch("scriptum_ai.tools.document.latex_parser._convert_latex", return_value=mock_doc):
             result = await parse_latex(tex_file)
 
         assert result.metadata.parse_time_seconds >= 0
@@ -86,7 +86,7 @@ class TestParseLatex:
 
         mock_doc = FakeDoclingDocument(items=[], pages={}, markdown="")
 
-        with patch("tools.document.latex_parser._convert_latex", return_value=mock_doc):
+        with patch("scriptum_ai.tools.document.latex_parser._convert_latex", return_value=mock_doc):
             result = await parse_latex(str(tex_file))
 
         assert isinstance(result, ParsedDocument)

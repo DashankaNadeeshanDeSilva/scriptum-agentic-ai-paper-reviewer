@@ -7,13 +7,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from tools.research.semantic_scholar import SemanticScholarTool
+from scriptum_ai.tools.research.semantic_scholar import SemanticScholarTool
 
 
 @pytest.fixture
 def tool(mock_settings: MagicMock):
     """Create a SemanticScholarTool with mocked settings."""
-    with patch("tools.research.semantic_scholar.get_settings", return_value=mock_settings):
+    with patch(
+        "scriptum_ai.tools.research.semantic_scholar.get_settings", return_value=mock_settings
+    ):
         return SemanticScholarTool()
 
 
@@ -28,7 +30,7 @@ class TestSemanticScholarSearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -49,7 +51,7 @@ class TestSemanticScholarSearch:
     @pytest.mark.asyncio
     async def test_search_handles_exception(self, tool: SemanticScholarTool) -> None:
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             side_effect=httpx.ConnectError("Connection failed"),
         ):
@@ -77,7 +79,7 @@ class TestSemanticScholarGetPaper:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -91,7 +93,7 @@ class TestSemanticScholarGetPaper:
     @pytest.mark.asyncio
     async def test_get_paper_not_found(self, tool: SemanticScholarTool) -> None:
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             side_effect=httpx.HTTPStatusError(
                 "404",
@@ -114,7 +116,7 @@ class TestSemanticScholarCitations:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -148,7 +150,7 @@ class TestSemanticScholarCitations:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -160,7 +162,7 @@ class TestSemanticScholarCitations:
     @pytest.mark.asyncio
     async def test_get_citations_handles_error(self, tool: SemanticScholarTool) -> None:
         with patch(
-            "tools.research.semantic_scholar.http_request_with_retry",
+            "scriptum_ai.tools.research.semantic_scholar.http_request_with_retry",
             new_callable=AsyncMock,
             side_effect=Exception("Server error"),
         ):

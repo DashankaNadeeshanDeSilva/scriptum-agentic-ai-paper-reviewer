@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select
 
-from backend.models.review import Feedback, File, Review
+from scriptum_ai.backend.models.review import Feedback, File, Review
 
 pytestmark = pytest.mark.asyncio
 
@@ -27,7 +27,7 @@ class TestStartReview:
         file_id = await _upload_pdf(client)
 
         # Mock _run_review_background to avoid actually running agents
-        import backend.api.v1.reviews as reviews_mod
+        import scriptum_ai.backend.api.v1.reviews as reviews_mod
 
         async def _noop_background(*args, **kwargs):
             pass
@@ -87,7 +87,7 @@ class TestStartReview:
         """start_review links uploaded files to the Review via File records."""
         file_id = await _upload_pdf(client)
 
-        import backend.api.v1.reviews as reviews_mod
+        import scriptum_ai.backend.api.v1.reviews as reviews_mod
 
         async def _noop_background(*args, **kwargs):
             pass

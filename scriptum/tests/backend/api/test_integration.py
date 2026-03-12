@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 from sqlalchemy import update
 
-from backend.models.review import Metric, Review
+from scriptum_ai.backend.models.review import Metric, Review
 
 
 class TestReviewLifecycleIntegration:
@@ -43,7 +43,9 @@ class TestReviewLifecycleIntegration:
         file_id = upload_resp.json()[0]["file_id"]
 
         # Step 2: Start review (mock the background task so it doesn't actually run)
-        with patch("backend.api.v1.reviews._run_review_background", new_callable=AsyncMock):
+        with patch(
+            "scriptum_ai.backend.api.v1.reviews._run_review_background", new_callable=AsyncMock
+        ):
             start_resp = await client.post(
                 "/api/v1/reviews",
                 json={
@@ -109,7 +111,9 @@ class TestReviewLifecycleIntegration:
         )
         file_id = upload_resp.json()[0]["file_id"]
 
-        with patch("backend.api.v1.reviews._run_review_background", new_callable=AsyncMock):
+        with patch(
+            "scriptum_ai.backend.api.v1.reviews._run_review_background", new_callable=AsyncMock
+        ):
             await client.post(
                 "/api/v1/reviews",
                 json={
@@ -135,7 +139,9 @@ class TestReviewLifecycleIntegration:
         )
         file_id = upload_resp.json()[0]["file_id"]
 
-        with patch("backend.api.v1.reviews._run_review_background", new_callable=AsyncMock):
+        with patch(
+            "scriptum_ai.backend.api.v1.reviews._run_review_background", new_callable=AsyncMock
+        ):
             start_resp = await client.post(
                 "/api/v1/reviews",
                 json={

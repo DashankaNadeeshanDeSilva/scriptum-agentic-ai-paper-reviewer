@@ -19,4 +19,4 @@ class CustomBuildHook(BuildHookInterface):
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:
         frontend_out = Path(self.root) / "frontend" / "out"
         if frontend_out.is_dir():
-            build_data["force_include"][str(frontend_out)] = "frontend/out"
+            build_data["force_include"][str(frontend_out)] = "scriptum_ai/frontend/out"

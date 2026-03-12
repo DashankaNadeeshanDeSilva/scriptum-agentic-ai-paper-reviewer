@@ -87,7 +87,7 @@ dev = [
 ]
 
 [project.scripts]
-scriptum = "cli.__main__:main"
+scriptum = "scriptum_ai.cli.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer"
@@ -95,7 +95,7 @@ Repository = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-pa
 Issues = "https://github.com/DashankaNadeeshanDeSilva/scriptum-agentic-ai-paper-reviewer/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["backend", "agents", "tools", "cli", "config"]
+packages = ["scriptum_ai"]
 
 # Custom build hook conditionally includes frontend/out when present
 [tool.hatch.build.hooks.custom]

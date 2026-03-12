@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from agents.meta_reviewer.tools import create_meta_reviewer_tools
+from scriptum_ai.agents.meta_reviewer.tools import create_meta_reviewer_tools
 
 
 class TestCreateMetaReviewerTools:
@@ -23,7 +23,10 @@ class TestCreateMetaReviewerTools:
     def test_graceful_on_import_failure(self) -> None:
         with patch.dict(
             "sys.modules",
-            {"tools.research.perplexity": None, "tools.research.google_search": None},
+            {
+                "scriptum_ai.tools.research.perplexity": None,
+                "scriptum_ai.tools.research.google_search": None,
+            },
         ):
             tools = create_meta_reviewer_tools(tools_enabled=["perplexity", "google_search", "rag"])
             # Should still have rag at minimum

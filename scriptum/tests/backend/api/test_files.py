@@ -55,7 +55,7 @@ class TestUploadFiles:
 
     async def test_upload_file_too_large(self, client, monkeypatch):
         """Reject files that exceed the size limit."""
-        import backend.api.v1.files as files_mod
+        import scriptum_ai.backend.api.v1.files as files_mod
 
         monkeypatch.setattr(files_mod, "MAX_FILE_SIZE_BYTES", 100)
         content = b"x" * 200

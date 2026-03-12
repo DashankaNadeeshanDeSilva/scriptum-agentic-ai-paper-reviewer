@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.core.llm import LLMClient, LLMError, LLMResponse
+from scriptum_ai.backend.core.llm import LLMClient, LLMError, LLMResponse
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -54,7 +54,7 @@ def _mock_completion_response(text: str = "ok", model: str = "claude-opus-4-6"):
 
 
 class TestModelStringConstruction:
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     def test_openai_model_string(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings(
             provider="openai", model="gpt-4-turbo", api_key="sk-test"
@@ -62,13 +62,13 @@ class TestModelStringConstruction:
         client = LLMClient(provider="openai")
         assert client.model_string == "gpt-4-turbo"
 
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     def test_anthropic_model_string(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings()
         client = LLMClient(provider="anthropic")
         assert client.model_string == "claude-opus-4-6"
 
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     def test_ollama_model_string(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings(
             provider="ollama",
@@ -79,7 +79,7 @@ class TestModelStringConstruction:
         client = LLMClient(provider="ollama")
         assert client.model_string == "ollama/llama2"
 
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     def test_unknown_provider_raises(self, mock_gs: MagicMock) -> None:
         settings = MagicMock()
         settings.llm.default_provider = "unknown"
@@ -97,8 +97,8 @@ class TestModelStringConstruction:
 
 class TestLLMClientComplete:
     @pytest.mark.asyncio
-    @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     async def test_successful_completion(self, mock_gs: MagicMock, mock_acomp: AsyncMock) -> None:
         mock_gs.return_value = _mock_settings()
         mock_acomp.return_value = _mock_completion_response("hello")
@@ -114,9 +114,9 @@ class TestLLMClientComplete:
         mock_acomp.assert_awaited_once()
 
     @pytest.mark.asyncio
-    @patch("backend.core.llm.asyncio.sleep", new_callable=AsyncMock)
-    @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.asyncio.sleep", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     async def test_retry_on_rate_limit(
         self,
         mock_gs: MagicMock,
@@ -149,9 +149,9 @@ class TestLLMClientComplete:
         assert mock_sleep.await_count == 2
 
     @pytest.mark.asyncio
-    @patch("backend.core.llm.asyncio.sleep", new_callable=AsyncMock)
-    @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.asyncio.sleep", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     async def test_max_retries_exceeded(
         self,
         mock_gs: MagicMock,
@@ -174,8 +174,8 @@ class TestLLMClientComplete:
         assert mock_acomp.await_count == 3
 
     @pytest.mark.asyncio
-    @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     async def test_non_retryable_error_raises_immediately(
         self, mock_gs: MagicMock, mock_acomp: AsyncMock
     ) -> None:
@@ -202,8 +202,8 @@ class TestLLMClientComplete:
 
 class TestLLMClientStream:
     @pytest.mark.asyncio
-    @patch("backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.litellm.acompletion", new_callable=AsyncMock)
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     async def test_streaming_yields_chunks(self, mock_gs: MagicMock, mock_acomp: AsyncMock) -> None:
         mock_gs.return_value = _mock_settings()
 
@@ -241,7 +241,7 @@ class TestLLMClientStream:
 
 
 class TestConfigResolution:
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     def test_reads_default_provider_from_settings(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings(
             provider="openai", model="gpt-4-turbo", api_key="sk-test"
@@ -250,7 +250,7 @@ class TestConfigResolution:
         assert client.provider == "openai"
         assert client.model == "gpt-4-turbo"
 
-    @patch("backend.core.llm.get_settings")
+    @patch("scriptum_ai.backend.core.llm.get_settings")
     def test_explicit_params_override_settings(self, mock_gs: MagicMock) -> None:
         mock_gs.return_value = _mock_settings()
         client = LLMClient(

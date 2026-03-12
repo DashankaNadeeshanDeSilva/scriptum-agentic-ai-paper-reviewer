@@ -11,8 +11,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentStatusEnum
-from agents.reviewers.core_expert import CoreExpertAgent
+from scriptum_ai.agents.core.base import AgentStatusEnum
+from scriptum_ai.agents.reviewers.core_expert import CoreExpertAgent
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -124,7 +124,7 @@ class TestInitialization:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm([])
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -135,7 +135,7 @@ class TestInitialization:
         agent = CoreExpertAgent(core_expert_config)
         mock_llm = _make_mock_llm([])
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -165,7 +165,7 @@ class TestResearchNode:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=tools),
         ):
             await agent.initialize()
@@ -190,7 +190,7 @@ class TestResearchNode:
 
         mock_llm = _make_mock_llm(_all_responses())
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[failing_tool]),
         ):
             await agent.initialize()
@@ -209,7 +209,7 @@ class TestResearchNode:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -229,7 +229,7 @@ class TestAnalyzeNode:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -249,7 +249,7 @@ class TestAnalyzeNode:
         mock_llm = _make_mock_llm(responses)
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -269,7 +269,7 @@ class TestEvaluateNode:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -291,7 +291,7 @@ class TestEvaluateNode:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -310,7 +310,7 @@ class TestEvaluateNode:
         mock_llm = _make_mock_llm(responses)
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -331,7 +331,7 @@ class TestGenerateFeedbackNode:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -351,7 +351,7 @@ class TestGenerateFeedbackNode:
         mock_llm = _make_mock_llm(responses)
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -371,7 +371,7 @@ class TestStreaming:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -396,7 +396,7 @@ class TestResultExtraction:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -414,7 +414,7 @@ class TestResultExtraction:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
@@ -454,7 +454,7 @@ class TestContextAndIntrospection:
         mock_llm = _make_mock_llm(_all_responses())
 
         with (
-            patch("agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
+            patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient", return_value=mock_llm),
             patch.object(CoreExpertAgent, "_create_tools", return_value=[]),
         ):
             await agent.initialize()
