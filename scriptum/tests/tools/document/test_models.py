@@ -4,7 +4,7 @@ These tests verify the ParsedDocument dataclass and its serialization.
 No Docling mocking needed — models.py has no Docling imports.
 """
 
-from tools.document.models import (
+from scriptum_ai.tools.document.models import (
     DocumentMetadata,
     Equation,
     Figure,

@@ -7,18 +7,20 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from tools.research.perplexity import PerplexityTool
+from scriptum_ai.tools.research.perplexity import PerplexityTool
 
 
 @pytest.fixture
 def tool(mock_settings: MagicMock):
-    with patch("tools.research.perplexity.get_settings", return_value=mock_settings):
+    with patch("scriptum_ai.tools.research.perplexity.get_settings", return_value=mock_settings):
         return PerplexityTool()
 
 
 @pytest.fixture
 def tool_no_key(mock_settings_no_keys: MagicMock):
-    with patch("tools.research.perplexity.get_settings", return_value=mock_settings_no_keys):
+    with patch(
+        "scriptum_ai.tools.research.perplexity.get_settings", return_value=mock_settings_no_keys
+    ):
         return PerplexityTool()
 
 
@@ -33,7 +35,7 @@ class TestPerplexitySearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.perplexity.http_request_with_retry",
+            "scriptum_ai.tools.research.perplexity.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -59,7 +61,7 @@ class TestPerplexitySearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.perplexity.http_request_with_retry",
+            "scriptum_ai.tools.research.perplexity.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -81,7 +83,7 @@ class TestPerplexitySearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.perplexity.http_request_with_retry",
+            "scriptum_ai.tools.research.perplexity.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):
@@ -104,7 +106,7 @@ class TestPerplexitySearch:
     @pytest.mark.asyncio
     async def test_search_handles_exception(self, tool: PerplexityTool) -> None:
         with patch(
-            "tools.research.perplexity.http_request_with_retry",
+            "scriptum_ai.tools.research.perplexity.http_request_with_retry",
             new_callable=AsyncMock,
             side_effect=httpx.ConnectError("Connection refused"),
         ):
@@ -126,7 +128,7 @@ class TestPerplexitySearch:
         mock_resp.raise_for_status = MagicMock()
 
         with patch(
-            "tools.research.perplexity.http_request_with_retry",
+            "scriptum_ai.tools.research.perplexity.http_request_with_retry",
             new_callable=AsyncMock,
             return_value=mock_resp,
         ):

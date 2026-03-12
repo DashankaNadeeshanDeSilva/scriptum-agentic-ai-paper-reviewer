@@ -84,25 +84,26 @@ Then open [http://localhost:3000](http://localhost:3000) and configure your LLM 
 
 ```
 scriptum/
+├── scriptum_ai/       Python package (pip install scriptum-ai)
+│   ├── backend/       FastAPI + SQLAlchemy (async) + Alembic migrations
+│   │   ├── api/v1/    REST endpoints + WebSocket handlers
+│   │   ├── core/      Config, database, logging, metrics, exceptions
+│   │   ├── models/    7 database tables (Review, File, Feedback, ChatMessage, etc.)
+│   │   └── services/  6-stage orchestrator pipeline
+│   ├── agents/        LangGraph-based agent system
+│   │   ├── meta_reviewer/ Desk check + aggregation (2 separate graphs)
+│   │   ├── reviewers/ BaseReviewer + 3 specialists (4-node graph each)
+│   │   └── core/      AgentInterface ABC + framework adapters
+│   ├── tools/         Shared agent tooling
+│   │   ├── research/  5 external API tools
+│   │   ├── document/  Docling PDF/LaTeX processing
+│   │   └── knowledge/ ChromaDB RAG system
+│   ├── config/        YAML configs + journal criteria definitions
+│   └── cli/           Typer CLI (scriptum start/review/init/doctor)
 ├── frontend/          Next.js 16 + Shadcn UI + Tailwind
 │   └── src/app/       9 routes: dashboard, upload, progress, report, chat, settings, setup, privacy
-├── backend/           FastAPI + SQLAlchemy (async) + Alembic migrations
-│   ├── api/v1/        REST endpoints + WebSocket handlers
-│   ├── core/          Config, database, logging, metrics, exceptions
-│   ├── models/        7 database tables (Review, File, Feedback, ChatMessage, etc.)
-│   └── services/      6-stage orchestrator pipeline
-├── agents/            LangGraph-based agent system
-│   ├── meta_reviewer/ Desk check + aggregation (2 separate graphs)
-│   ├── reviewers/     BaseReviewer + 3 specialists (4-node graph each)
-│   └── core/          AgentInterface ABC + framework adapters
-├── tools/             Shared agent tooling
-│   ├── research/      5 external API tools
-│   ├── document/      Docling PDF/LaTeX processing
-│   └── knowledge/     ChromaDB RAG system
-├── config/            YAML configs + journal criteria definitions
-├── cli/               Typer CLI (scriptum start/review/init/doctor)
 ├── docker/            Dockerfile.backend, Dockerfile.frontend, docker-compose.yml
-└── tests/             381 backend + 28 frontend tests
+└── tests/             408 backend + 28 frontend tests
 ```
 
 ## Tech Stack
@@ -115,7 +116,7 @@ scriptum/
 | Document Processing | Docling (IBM, MIT license) |
 | Vector Store | ChromaDB |
 | Database | SQLite (dev) / PostgreSQL (production) |
-| Testing | pytest (381 tests), Vitest (28 tests) |
+| Testing | pytest (408 tests), Vitest (28 tests) |
 
 ## Documentation
 
@@ -140,6 +141,7 @@ npm run dev
 
 # Lint & type check
 ruff check . && ruff format --check .
+mypy scriptum_ai/ --ignore-missing-imports
 cd frontend && npx tsc --noEmit
 ```
 

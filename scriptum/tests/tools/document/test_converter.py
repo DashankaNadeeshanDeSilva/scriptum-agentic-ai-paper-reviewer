@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from backend.core.config import DocumentConfig
-from tools.document.converter import _DEVICE_MAP, _TABLE_MODE_MAP, get_converter
+from scriptum_ai.backend.core.config import DocumentConfig
+from scriptum_ai.tools.document.converter import _DEVICE_MAP, _TABLE_MODE_MAP, get_converter
 
 
 class TestDeviceMap:
@@ -47,7 +47,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig()
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             converter = get_converter()
 
         # DocumentConverter is mocked, so converter is a MagicMock
@@ -58,7 +58,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig()
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             c1 = get_converter()
             c2 = get_converter()
 
@@ -69,7 +69,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig()
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             c1 = get_converter()
             get_converter.cache_clear()
             c2 = get_converter()
@@ -82,7 +82,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig(device="cuda")
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             get_converter()
 
         # If we got here without error, the device was successfully looked up
@@ -94,8 +94,8 @@ class TestGetConverter:
         mock_pipeline = MagicMock()
 
         with (
-            patch("tools.document.converter.get_settings", return_value=mock_settings),
-            patch("tools.document.converter.PdfPipelineOptions", mock_pipeline),
+            patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.tools.document.converter.PdfPipelineOptions", mock_pipeline),
         ):
             get_converter()
 
@@ -110,8 +110,8 @@ class TestGetConverter:
         mock_accel = MagicMock()
 
         with (
-            patch("tools.document.converter.get_settings", return_value=mock_settings),
-            patch("tools.document.converter.AcceleratorOptions", mock_accel),
+            patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.tools.document.converter.AcceleratorOptions", mock_accel),
         ):
             get_converter()
 
@@ -124,7 +124,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig(table_mode="fast")
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             get_converter()
         # No error means the mapping worked
 
@@ -133,7 +133,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig(device="tpu")
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             # Should not raise — falls back to AUTO
             get_converter()
 
@@ -142,7 +142,7 @@ class TestGetConverter:
         mock_settings = MagicMock()
         mock_settings.document = DocumentConfig(device="CUDA")
 
-        with patch("tools.document.converter.get_settings", return_value=mock_settings):
+        with patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings):
             get_converter()
 
     def test_allowed_formats_set(self):
@@ -152,8 +152,8 @@ class TestGetConverter:
         mock_converter_cls = MagicMock()
 
         with (
-            patch("tools.document.converter.get_settings", return_value=mock_settings),
-            patch("tools.document.converter.DocumentConverter", mock_converter_cls),
+            patch("scriptum_ai.tools.document.converter.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.tools.document.converter.DocumentConverter", mock_converter_cls),
         ):
             get_converter()
 

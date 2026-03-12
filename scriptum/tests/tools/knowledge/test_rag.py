@@ -8,8 +8,8 @@ from unittest.mock import patch
 import chromadb
 import pytest
 
-from tools.knowledge.journal_loader import _yaml_to_text, load_journal_guidelines
-from tools.knowledge.rag import (
+from scriptum_ai.tools.knowledge.journal_loader import _yaml_to_text, load_journal_guidelines
+from scriptum_ai.tools.knowledge.rag import (
     DOMAIN_KNOWLEDGE,
     JOURNAL_GUIDELINES,
     RAGTool,
@@ -239,7 +239,9 @@ class TestLoadJournalGuidelines:
 
     @pytest.mark.asyncio
     async def test_no_journals_dir(self, rag: RAGTool) -> None:
-        with patch("tools.knowledge.journal_loader._JOURNALS_DIR", Path("/nonexistent")):
+        with patch(
+            "scriptum_ai.tools.knowledge.journal_loader._JOURNALS_DIR", Path("/nonexistent")
+        ):
             count = await load_journal_guidelines(rag)
         assert count == 0
 

@@ -16,9 +16,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentInterface, Evidence, ReviewResult
-from backend.schemas.review import DeskCheckResult, ReviewEvent
-from backend.services.orchestrator import (
+from scriptum_ai.agents.core.base import AgentInterface, Evidence, ReviewResult
+from scriptum_ai.backend.schemas.review import DeskCheckResult, ReviewEvent
+from scriptum_ai.backend.services.orchestrator import (
     _emit,
     _review_result_to_reviewer_report,
     _stage_desk_check,
@@ -27,7 +27,7 @@ from backend.services.orchestrator import (
     remove_event_queue,
     run_review_pipeline,
 )
-from tools.document.models import DocumentMetadata, ParsedDocument, Section
+from scriptum_ai.tools.document.models import DocumentMetadata, ParsedDocument, Section
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -360,8 +360,8 @@ class TestReviewResultConversion:
 
 class TestFullPipeline:
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_successful_pipeline(self, mock_process_doc, mock_session_factory):
         """Test the full happy path: all 6 stages complete successfully."""
         review_id = uuid.uuid4()
@@ -425,8 +425,8 @@ class TestFullPipeline:
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_desk_check_failure_stops_pipeline(self, mock_process_doc, mock_session_factory):
         """Test that a failed desk check stops the pipeline at Stage 3."""
         review_id = uuid.uuid4()
@@ -473,8 +473,8 @@ class TestFullPipeline:
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_single_reviewer_failure_continues(self, mock_process_doc, mock_session_factory):
         """Test that if one reviewer fails, the others' results are still aggregated."""
         review_id = uuid.uuid4()
@@ -528,8 +528,8 @@ class TestFullPipeline:
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_all_reviewers_fail_stops_pipeline(self, mock_process_doc, mock_session_factory):
         """Test that if all reviewers fail, the pipeline stops without aggregation."""
         review_id = uuid.uuid4()
@@ -571,8 +571,8 @@ class TestFullPipeline:
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_document_parsing_failure(self, mock_process_doc, mock_session_factory):
         """Test that a document parsing failure stops the pipeline at Stage 1."""
         review_id = uuid.uuid4()
@@ -611,8 +611,8 @@ class TestFullPipeline:
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_aggregation_failure(self, mock_process_doc, mock_session_factory):
         """Test that aggregation failure marks review as failed but individual reviews are saved."""
         review_id = uuid.uuid4()
@@ -662,8 +662,8 @@ class TestFullPipeline:
         remove_event_queue(review_id)
 
     @pytest.mark.asyncio
-    @patch("backend.services.orchestrator.async_session_factory")
-    @patch("backend.services.document.process_document")
+    @patch("scriptum_ai.backend.services.orchestrator.async_session_factory")
+    @patch("scriptum_ai.backend.services.document.process_document")
     async def test_pipeline_emits_progress_events(self, mock_process_doc, mock_session_factory):
         """Test that progress events are emitted at each stage transition."""
         review_id = uuid.uuid4()

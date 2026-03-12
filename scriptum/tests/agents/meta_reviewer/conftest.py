@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from agents.core.base import AgentConfig
+from scriptum_ai.agents.core.base import AgentConfig
 
 
 @dataclass

@@ -10,9 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.core.config import DocumentConfig
-from backend.services.document import DocumentProcessingError, process_document
-from tools.document.models import DocumentMetadata, ParsedDocument, Reference
+from scriptum_ai.backend.core.config import DocumentConfig
+from scriptum_ai.backend.services.document import DocumentProcessingError, process_document
+from scriptum_ai.tools.document.models import DocumentMetadata, ParsedDocument, Reference
 
 
 def _make_parsed(source_format: str = "pdf") -> ParsedDocument:
@@ -64,7 +64,7 @@ class TestFileValidation:
         mock_settings.document = DocumentConfig(max_file_size_mb=1)
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
             pytest.raises(DocumentProcessingError, match="File too large"),
         ):
             await process_document(pdf)
@@ -78,9 +78,9 @@ class TestFileValidation:
         mock_settings.document = DocumentConfig(max_file_size_mb=1)
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
             patch(
-                "backend.services.document.parse_pdf",
+                "scriptum_ai.backend.services.document.parse_pdf",
                 new_callable=AsyncMock,
                 return_value=_make_parsed(),
             ),
@@ -106,8 +106,8 @@ class TestFileTypeRouting:
         mock_parse_pdf = AsyncMock(return_value=_make_parsed("pdf"))
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_pdf", mock_parse_pdf),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_pdf", mock_parse_pdf),
         ):
             result = await process_document(pdf)
 
@@ -125,8 +125,8 @@ class TestFileTypeRouting:
         mock_parse_latex = AsyncMock(return_value=_make_parsed("latex"))
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_latex", mock_parse_latex),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_latex", mock_parse_latex),
         ):
             result = await process_document(tex)
 
@@ -145,8 +145,8 @@ class TestFileTypeRouting:
         mock_parse_latex = AsyncMock(return_value=_make_parsed("latex"))
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_latex", mock_parse_latex),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_latex", mock_parse_latex),
         ):
             await process_document(pdf, file_type="tex")
 
@@ -164,8 +164,8 @@ class TestFileTypeRouting:
         mock_parse_latex = AsyncMock(return_value=_make_parsed("latex"))
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_latex", mock_parse_latex),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_latex", mock_parse_latex),
         ):
             await process_document(tex, file_type="latex")
 
@@ -182,8 +182,8 @@ class TestFileTypeRouting:
         mock_parse_pdf = AsyncMock(return_value=_make_parsed())
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_pdf", mock_parse_pdf),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_pdf", mock_parse_pdf),
         ):
             await process_document(pdf, file_type="PDF")
 
@@ -207,13 +207,13 @@ class TestReferenceResolution:
         mock_resolve = AsyncMock(return_value=[])
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
             patch(
-                "backend.services.document.parse_pdf",
+                "scriptum_ai.backend.services.document.parse_pdf",
                 new_callable=AsyncMock,
                 return_value=_make_parsed(),
             ),
-            patch("backend.services.document.resolve_references", mock_resolve),
+            patch("scriptum_ai.backend.services.document.resolve_references", mock_resolve),
         ):
             await process_document(pdf, resolve_refs=False)
 
@@ -232,13 +232,13 @@ class TestReferenceResolution:
         mock_resolve = AsyncMock(return_value=resolved_refs)
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
             patch(
-                "backend.services.document.parse_pdf",
+                "scriptum_ai.backend.services.document.parse_pdf",
                 new_callable=AsyncMock,
                 return_value=parsed,
             ),
-            patch("backend.services.document.resolve_references", mock_resolve),
+            patch("scriptum_ai.backend.services.document.resolve_references", mock_resolve),
         ):
             result = await process_document(pdf, resolve_refs=True)
 
@@ -258,13 +258,13 @@ class TestReferenceResolution:
         mock_resolve = AsyncMock()
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
             patch(
-                "backend.services.document.parse_pdf",
+                "scriptum_ai.backend.services.document.parse_pdf",
                 new_callable=AsyncMock,
                 return_value=parsed,
             ),
-            patch("backend.services.document.resolve_references", mock_resolve),
+            patch("scriptum_ai.backend.services.document.resolve_references", mock_resolve),
         ):
             await process_document(pdf, resolve_refs=True)
 
@@ -288,8 +288,8 @@ class TestAutoFileTypeDetection:
         mock_parse_pdf = AsyncMock(return_value=_make_parsed())
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_pdf", mock_parse_pdf),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_pdf", mock_parse_pdf),
         ):
             await process_document(pdf)  # No file_type arg
 
@@ -306,8 +306,8 @@ class TestAutoFileTypeDetection:
         mock_parse_latex = AsyncMock(return_value=_make_parsed("latex"))
 
         with (
-            patch("backend.services.document.get_settings", return_value=mock_settings),
-            patch("backend.services.document.parse_latex", mock_parse_latex),
+            patch("scriptum_ai.backend.services.document.get_settings", return_value=mock_settings),
+            patch("scriptum_ai.backend.services.document.parse_latex", mock_parse_latex),
         ):
             await process_document(tex)
 

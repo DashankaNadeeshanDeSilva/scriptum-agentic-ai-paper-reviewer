@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agents.core.base import (
+from scriptum_ai.agents.core.base import (
     AgentConfig,
     AgentStatusEnum,
     Evidence,
@@ -200,9 +200,9 @@ class TestLangGraphAdapter:
     """Test the LangGraph adapter lifecycle and execution."""
 
     @pytest.mark.asyncio
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     async def test_initialize_creates_llm_and_graph(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter(config=AgentConfig(agent_type="core_expert"))
         assert adapter.get_status() == AgentStatusEnum.IDLE
@@ -214,9 +214,9 @@ class TestLangGraphAdapter:
         assert adapter.get_status() == AgentStatusEnum.IDLE
 
     @pytest.mark.asyncio
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     async def test_execute_runs_graph_and_returns_result(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter(config=AgentConfig(agent_type="core_expert", timeout=30))
         await adapter.initialize()
@@ -232,9 +232,9 @@ class TestLangGraphAdapter:
         assert adapter.get_status() == AgentStatusEnum.COMPLETED
 
     @pytest.mark.asyncio
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     async def test_stream_yields_progress_events(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter(config=AgentConfig(agent_type="methods_specialist"))
         await adapter.initialize()
@@ -251,18 +251,18 @@ class TestLangGraphAdapter:
         assert "generate_feedback" in steps_seen
 
     @pytest.mark.asyncio
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     async def test_execute_without_initialize_raises(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
         with pytest.raises(RuntimeError, match="not initialised"):
             await adapter.execute({"paper": {}})
 
     @pytest.mark.asyncio
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     async def test_cleanup_resets_state(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
         await adapter.initialize()
@@ -273,16 +273,16 @@ class TestLangGraphAdapter:
         assert adapter._tools == []
         assert adapter.get_status() == AgentStatusEnum.IDLE
 
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     def test_get_tools_returns_list(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
         assert adapter.get_tools() == []
 
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     def test_set_context_stores_context(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         adapter = LangGraphAdapter()
         ctx = {"journal": "Nature", "domain": "biology"}
@@ -290,9 +290,9 @@ class TestLangGraphAdapter:
         assert adapter._context == ctx
 
     @pytest.mark.asyncio
-    @patch("agents.core.adapters.langgraph.LLMClient")
+    @patch("scriptum_ai.agents.core.adapters.langgraph.LLMClient")
     async def test_initialize_failure_sets_failed_status(self, mock_llm_cls: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
 
         mock_llm_cls.side_effect = Exception("LLM init failed")
         adapter = LangGraphAdapter()
@@ -309,10 +309,10 @@ class TestLangGraphAdapter:
 
 
 class TestAgentFactory:
-    @patch("agents.core.factory.get_settings")
+    @patch("scriptum_ai.agents.core.factory.get_settings")
     def test_creates_langgraph_adapter(self, mock_gs: MagicMock) -> None:
-        from agents.core.adapters.langgraph import LangGraphAdapter
-        from agents.core.factory import create_agent
+        from scriptum_ai.agents.core.adapters.langgraph import LangGraphAdapter
+        from scriptum_ai.agents.core.factory import create_agent
 
         mock_gs.return_value = MagicMock()
         mock_gs.return_value.agents.framework = "langgraph"
@@ -320,9 +320,9 @@ class TestAgentFactory:
         agent = create_agent(AgentConfig(agent_type="core_expert"))
         assert isinstance(agent, LangGraphAdapter)
 
-    @patch("agents.core.factory.get_settings")
+    @patch("scriptum_ai.agents.core.factory.get_settings")
     def test_crewai_raises_not_implemented(self, mock_gs: MagicMock) -> None:
-        from agents.core.factory import create_agent
+        from scriptum_ai.agents.core.factory import create_agent
 
         mock_gs.return_value = MagicMock()
         mock_gs.return_value.agents.framework = "crewai"
@@ -330,9 +330,9 @@ class TestAgentFactory:
         with pytest.raises(NotImplementedError, match="CrewAI"):
             create_agent()
 
-    @patch("agents.core.factory.get_settings")
+    @patch("scriptum_ai.agents.core.factory.get_settings")
     def test_smolagents_raises_not_implemented(self, mock_gs: MagicMock) -> None:
-        from agents.core.factory import create_agent
+        from scriptum_ai.agents.core.factory import create_agent
 
         mock_gs.return_value = MagicMock()
         mock_gs.return_value.agents.framework = "smolagents"
@@ -340,9 +340,9 @@ class TestAgentFactory:
         with pytest.raises(NotImplementedError, match="SmolAgents"):
             create_agent()
 
-    @patch("agents.core.factory.get_settings")
+    @patch("scriptum_ai.agents.core.factory.get_settings")
     def test_unknown_framework_raises_value_error(self, mock_gs: MagicMock) -> None:
-        from agents.core.factory import create_agent
+        from scriptum_ai.agents.core.factory import create_agent
 
         mock_gs.return_value = MagicMock()
         mock_gs.return_value.agents.framework = "tensorflow_agents"

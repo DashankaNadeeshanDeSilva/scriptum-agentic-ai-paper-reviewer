@@ -3,9 +3,9 @@
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from backend.core.database import Base
-from backend.core.metrics import MetricsCollector, get_metrics_collector, stage_timer
-from backend.models.review import Metric, Review
+from scriptum_ai.backend.core.database import Base
+from scriptum_ai.backend.core.metrics import MetricsCollector, get_metrics_collector, stage_timer
+from scriptum_ai.backend.models.review import Metric, Review
 
 
 @pytest_asyncio.fixture

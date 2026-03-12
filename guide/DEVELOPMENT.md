@@ -45,75 +45,77 @@ This guide covers the system architecture, how to extend SCRIPTUM, and developme
 
 ```
 scriptum/
-├── backend/
-│   ├── api/v1/
-│   │   ├── reviews.py       # Review lifecycle CRUD
-│   │   ├── files.py          # File upload/download
-│   │   ├── settings.py       # Configuration management
-│   │   ├── metrics.py        # Observability endpoints
-│   │   ├── chat.py           # Post-review chat (REST + WS)
-│   │   └── websocket.py      # Review progress streaming
-│   ├── core/
-│   │   ├── config.py         # AppSettings (Pydantic Settings)
-│   │   ├── database.py       # SQLAlchemy async engine & session
-│   │   ├── exceptions.py     # ScriptumError hierarchy
-│   │   ├── llm.py            # LiteLLM wrapper
-│   │   ├── logging.py        # Structured logging (loguru)
-│   │   ├── metrics.py        # MetricsCollector singleton
-│   │   └── security.py       # API key encryption
-│   ├── models/review.py      # 7 SQLAlchemy models
-│   ├── schemas/review.py     # Pydantic request/response schemas
-│   └── services/
-│       ├── orchestrator.py   # 6-stage review pipeline
-│       └── document.py       # Document processing service
+├── scriptum_ai/
+│   ├── backend/
+│   │   ├── api/v1/
+│   │   │   ├── reviews.py       # Review lifecycle CRUD
+│   │   │   ├── files.py          # File upload/download
+│   │   │   ├── settings.py       # Configuration management
+│   │   │   ├── metrics.py        # Observability endpoints
+│   │   │   ├── chat.py           # Post-review chat (REST + WS)
+│   │   │   └── websocket.py      # Review progress streaming
+│   │   ├── core/
+│   │   │   ├── config.py         # AppSettings (Pydantic Settings)
+│   │   │   ├── database.py       # SQLAlchemy async engine & session
+│   │   │   ├── exceptions.py     # ScriptumError hierarchy
+│   │   │   ├── llm.py            # LiteLLM wrapper
+│   │   │   ├── logging.py        # Structured logging (loguru)
+│   │   │   ├── metrics.py        # MetricsCollector singleton
+│   │   │   └── security.py       # API key encryption
+│   │   ├── models/review.py      # 7 SQLAlchemy models
+│   │   ├── schemas/review.py     # Pydantic request/response schemas
+│   │   └── services/
+│   │       ├── orchestrator.py   # 6-stage review pipeline
+│   │       └── document.py       # Document processing service
+│   │
+│   ├── agents/
+│   │   ├── core/
+│   │   │   ├── base.py           # AgentInterface ABC + ReviewResult
+│   │   │   ├── factory.py        # Agent registry & creation
+│   │   │   └── adapters/
+│   │   │       ├── langgraph.py  # LangGraph adapter (primary)
+│   │   │       ├── crewai.py     # CrewAI adapter (stub)
+│   │   │       └── smolagents.py # SmolAgents adapter (stub)
+│   │   ├── meta_reviewer/
+│   │   │   ├── agent.py          # MetaReviewerAgent (2 LangGraph graphs)
+│   │   │   ├── prompts.py        # Desk check + aggregation prompts
+│   │   │   └── tools.py          # Meta reviewer-specific tools
+│   │   ├── reviewers/
+│   │   │   ├── base.py           # BaseReviewer (4-node graph template)
+│   │   │   ├── core_expert.py    # Deep domain specialist
+│   │   │   ├── adjacent_expert.py # Cross-disciplinary perspective
+│   │   │   ├── methods_specialist.py # Methodology & statistics
+│   │   │   └── prompts.py        # Reviewer system prompts
+│   │   └── shared_prompts.py     # SCORING_RUBRIC, DEBIASING_INSTRUCTIONS, etc.
+│   │
+│   ├── tools/
+│   │   ├── research/
+│   │   │   ├── base.py           # ResearchTool base class
+│   │   │   ├── arxiv_tool.py     # arXiv API
+│   │   │   ├── semantic_scholar.py # S2 Academic Graph API
+│   │   │   ├── perplexity.py     # Perplexity AI search
+│   │   │   ├── google_search.py  # Google Custom Search
+│   │   │   └── crossref.py       # CrossRef metadata
+│   │   ├── document/
+│   │   │   ├── pdf_parser.py     # Docling PDF extraction
+│   │   │   ├── latex_parser.py   # LaTeX processing
+│   │   │   ├── models.py         # ParsedDocument, Section, Table, etc.
+│   │   │   └── reference_resolver.py # Reference enrichment (stub)
+│   │   └── knowledge/
+│   │       ├── rag.py            # ChromaDB RAG operations
+│   │       └── journal_loader.py # Journal config YAML loader
+│   │
+│   ├── config/
+│   │   ├── config.yaml           # Default configuration template
+│   │   └── journals/             # Journal-specific review criteria
+│   │       ├── aaai.yaml
+│   │       ├── acm.yaml
+│   │       ├── ieee.yaml
+│   │       ├── nature.yaml
+│   │       └── neurips.yaml
+│   │
+│   └── cli/__main__.py           # Typer CLI entry point
 │
-├── agents/
-│   ├── core/
-│   │   ├── base.py           # AgentInterface ABC + ReviewResult
-│   │   ├── factory.py        # Agent registry & creation
-│   │   └── adapters/
-│   │       ├── langgraph.py  # LangGraph adapter (primary)
-│   │       ├── crewai.py     # CrewAI adapter (stub)
-│   │       └── smolagents.py # SmolAgents adapter (stub)
-│   ├── meta_reviewer/
-│   │   ├── agent.py          # MetaReviewerAgent (2 LangGraph graphs)
-│   │   ├── prompts.py        # Desk check + aggregation prompts
-│   │   └── tools.py          # Meta reviewer-specific tools
-│   ├── reviewers/
-│   │   ├── base.py           # BaseReviewer (4-node graph template)
-│   │   ├── core_expert.py    # Deep domain specialist
-│   │   ├── adjacent_expert.py # Cross-disciplinary perspective
-│   │   ├── methods_specialist.py # Methodology & statistics
-│   │   └── prompts.py        # Reviewer system prompts
-│   └── shared_prompts.py     # SCORING_RUBRIC, DEBIASING_INSTRUCTIONS, etc.
-│
-├── tools/
-│   ├── research/
-│   │   ├── base.py           # ResearchTool base class
-│   │   ├── arxiv_tool.py     # arXiv API
-│   │   ├── semantic_scholar.py # S2 Academic Graph API
-│   │   ├── perplexity.py     # Perplexity AI search
-│   │   ├── google_search.py  # Google Custom Search
-│   │   └── crossref.py       # CrossRef metadata
-│   ├── document/
-│   │   ├── pdf_parser.py     # Docling PDF extraction
-│   │   ├── latex_parser.py   # LaTeX processing
-│   │   ├── models.py         # ParsedDocument, Section, Table, etc.
-│   │   └── reference_resolver.py # Reference enrichment (stub)
-│   └── knowledge/
-│       ├── rag.py            # ChromaDB RAG operations
-│       └── journal_loader.py # Journal config YAML loader
-│
-├── config/
-│   ├── config.yaml           # Default configuration template
-│   └── journals/             # Journal-specific review criteria
-│       ├── aaai.yaml
-│       ├── acm.yaml
-│       ├── ieee.yaml
-│       ├── nature.yaml
-│       └── neurips.yaml
-│
-├── cli/__main__.py           # Typer CLI entry point
 ├── frontend/                 # Next.js 16 + Shadcn UI
 ├── docker/                   # Docker Compose + Dockerfiles
 └── tests/                    # pytest + vitest test suites
@@ -125,11 +127,11 @@ Reviewers follow a 4-step LangGraph pipeline: **RESEARCH → ANALYZE → EVALUAT
 
 ### 1. Create the Agent File
 
-Create `agents/reviewers/your_reviewer.py`:
+Create `scriptum_ai/agents/reviewers/your_reviewer.py`:
 
 ```python
-from agents.reviewers.base import BaseReviewer
-from agents.reviewers.prompts import YOUR_REVIEWER_SYSTEM_PROMPT
+from scriptum_ai.agents.reviewers.base import BaseReviewer
+from scriptum_ai.agents.reviewers.prompts import YOUR_REVIEWER_SYSTEM_PROMPT
 
 class YourReviewer(BaseReviewer):
     @property
@@ -143,7 +145,7 @@ class YourReviewer(BaseReviewer):
 
 ### 2. Add the System Prompt
 
-In `agents/reviewers/prompts.py`:
+In `scriptum_ai/agents/reviewers/prompts.py`:
 
 ```python
 YOUR_REVIEWER_SYSTEM_PROMPT = """\
@@ -155,21 +157,21 @@ You are a specialized reviewer focusing on [your area].
 """
 ```
 
-The `{scoring_rubric}`, `{debiasing_instructions}`, and `{evidence_requirement}` placeholders are automatically filled from `agents/shared_prompts.py`.
+The `{scoring_rubric}`, `{debiasing_instructions}`, and `{evidence_requirement}` placeholders are automatically filled from `scriptum_ai/agents/shared_prompts.py`.
 
 ### 3. Register in Factory
 
-In `agents/core/factory.py`, add to the registry:
+In `scriptum_ai/agents/core/factory.py`, add to the registry:
 
 ```python
-from agents.reviewers.your_reviewer import YourReviewer
+from scriptum_ai.agents.reviewers.your_reviewer import YourReviewer
 
 REVIEWER_REGISTRY["your_reviewer"] = YourReviewer
 ```
 
 ### 4. Add to Orchestrator
 
-In `backend/services/orchestrator.py`, add to the reviewer list used in stage 4.
+In `scriptum_ai/backend/services/orchestrator.py`, add to the reviewer list used in stage 4.
 
 ### 5. Write Tests
 
@@ -179,10 +181,10 @@ Create `tests/agents/reviewers/test_your_reviewer.py` following the pattern in e
 
 ### 1. Create the Tool
 
-Create `tools/research/your_tool.py`:
+Create `scriptum_ai/tools/research/your_tool.py`:
 
 ```python
-from tools.research.base import ResearchTool
+from scriptum_ai.tools.research.base import ResearchTool
 
 class YourTool(ResearchTool):
     def __init__(self, api_key: str | None = None):
@@ -209,7 +211,7 @@ class YourTool(ResearchTool):
 
 ### 2. Add Configuration
 
-In `config/config.yaml`:
+In `scriptum_ai/config/config.yaml`:
 
 ```yaml
 apis:
@@ -228,7 +230,7 @@ Create `tests/tools/research/test_your_tool.py`.
 
 ## How to Swap Agent Frameworks
 
-SCRIPTUM uses an adapter pattern defined in `agents/core/base.py`:
+SCRIPTUM uses an adapter pattern defined in `scriptum_ai/agents/core/base.py`:
 
 ```python
 class AgentInterface(ABC):
@@ -241,8 +243,8 @@ class AgentInterface(ABC):
 
 To add a new framework:
 
-1. Create `agents/core/adapters/your_framework.py` implementing `AgentInterface`
-2. Update `agents/core/factory.py` to use your adapter when `agents.framework` config matches
+1. Create `scriptum_ai/agents/core/adapters/your_framework.py` implementing `AgentInterface`
+2. Update `scriptum_ai/agents/core/factory.py` to use your adapter when `agents.framework` config matches
 3. Ensure your adapter produces `ReviewResult` objects with the same structure
 
 ## Testing
@@ -256,7 +258,7 @@ cd scriptum
 pytest --ignore=tests/backend/services/test_document.py -k "not TestFullPipeline" -v
 
 # With coverage
-pytest --ignore=tests/backend/services/test_document.py -k "not TestFullPipeline" --cov=backend --cov=agents --cov=tools --cov-report=term-missing
+pytest --ignore=tests/backend/services/test_document.py -k "not TestFullPipeline" --cov=scriptum_ai --cov-report=term-missing
 
 # Run specific test class
 pytest tests/backend/api/test_reviews.py::TestStartReview -v
@@ -328,7 +330,7 @@ tests/
 ruff check .               # lint
 ruff format .              # format
 ruff check --fix .         # auto-fix
-mypy backend/ agents/ tools/ cli/
+mypy scriptum_ai/
 ```
 
 ### TypeScript
@@ -397,4 +399,4 @@ ScriptumError (base, 500)
 └── ParsingError (422)
 ```
 
-Global exception handlers in `backend/main.py` automatically map these to JSON error responses with `request_id` for correlation.
+Global exception handlers in `scriptum_ai/backend/main.py` automatically map these to JSON error responses with `request_id` for correlation.

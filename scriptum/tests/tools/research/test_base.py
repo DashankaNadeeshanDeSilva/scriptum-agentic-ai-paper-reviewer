@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from tools.research.base import (
+from scriptum_ai.tools.research.base import (
     CitationGraph,
     Paper,
     SearchResult,

@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agents.core.base import AgentStatusEnum
-from agents.meta_reviewer.agent import MetaReviewerAgent
+from scriptum_ai.agents.core.base import AgentStatusEnum
+from scriptum_ai.agents.meta_reviewer.agent import MetaReviewerAgent
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -162,11 +162,11 @@ def _patch_llm_and_tools(
     tool_list = [mock_rag_tool, mock_perplexity_tool, mock_google_tool]
 
     llm_patch = patch(
-        "agents.meta_reviewer.agent.LLMClient",
+        "scriptum_ai.agents.meta_reviewer.agent.LLMClient",
         return_value=mock_llm,
     )
     tools_patch = patch(
-        "agents.meta_reviewer.agent.create_meta_reviewer_tools",
+        "scriptum_ai.agents.meta_reviewer.agent.create_meta_reviewer_tools",
         return_value=tool_list,
     )
     return llm_patch, tools_patch, mock_llm

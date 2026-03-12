@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agents.reviewers.prompts import (
+from scriptum_ai.agents.reviewers.prompts import (
     ADJACENT_EXPERT_SYSTEM,
     ANALYZE_PROMPT,
     CORE_EXPERT_SYSTEM,

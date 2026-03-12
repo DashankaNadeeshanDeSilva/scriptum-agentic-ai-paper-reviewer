@@ -14,6 +14,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from scriptum_ai.tools.document.models import ParsedDocument
+from scriptum_ai.tools.document.pdf_parser import _docling_to_parsed, _flush_section, parse_pdf
 from tests.tools.document.mock_docling import (
     FakeDoclingDocument,
     FakeFormulaItem,
@@ -24,8 +26,6 @@ from tests.tools.document.mock_docling import (
     FakeTextItem,
     FakeTitleItem,
 )
-from tools.document.models import ParsedDocument
-from tools.document.pdf_parser import _docling_to_parsed, _flush_section, parse_pdf
 
 # =========================================================================
 # _docling_to_parsed() — core mapping logic
@@ -369,7 +369,9 @@ class TestParsePdf:
             markdown="# Test",
         )
 
-        with patch("tools.document.pdf_parser._convert_document", return_value=mock_doc):
+        with patch(
+            "scriptum_ai.tools.document.pdf_parser._convert_document", return_value=mock_doc
+        ):
             result = await parse_pdf(pdf_file)
 
         assert isinstance(result, ParsedDocument)
@@ -383,7 +385,9 @@ class TestParsePdf:
 
         mock_doc = FakeDoclingDocument(items=[], pages={}, markdown="")
 
-        with patch("tools.document.pdf_parser._convert_document", return_value=mock_doc):
+        with patch(
+            "scriptum_ai.tools.document.pdf_parser._convert_document", return_value=mock_doc
+        ):
             result = await parse_pdf(pdf_file)
 
         assert result.metadata.parse_time_seconds >= 0

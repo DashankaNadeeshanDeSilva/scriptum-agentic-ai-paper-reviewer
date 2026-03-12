@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.services.orchestrator import (
+from scriptum_ai.backend.services.orchestrator import (
     _check_cancelled,
     _get_cancel_event,
     _is_cancelled,
@@ -117,12 +117,21 @@ class TestPipelineCancellation:
             _check_cancelled(review_id)
 
         with (
-            patch("backend.services.orchestrator.async_session_factory") as mock_session_factory,
-            patch("backend.services.orchestrator._run_pipeline_stages", side_effect=fake_stages),
-            patch("backend.services.orchestrator._emit", new_callable=AsyncMock) as mock_emit,
-            patch("backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock),
             patch(
-                "backend.services.orchestrator._update_status", new_callable=AsyncMock
+                "scriptum_ai.backend.services.orchestrator.async_session_factory"
+            ) as mock_session_factory,
+            patch(
+                "scriptum_ai.backend.services.orchestrator._run_pipeline_stages",
+                side_effect=fake_stages,
+            ),
+            patch(
+                "scriptum_ai.backend.services.orchestrator._emit", new_callable=AsyncMock
+            ) as mock_emit,
+            patch(
+                "scriptum_ai.backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock
+            ),
+            patch(
+                "scriptum_ai.backend.services.orchestrator._update_status", new_callable=AsyncMock
             ) as mock_update,
         ):
             # Setup session mock
@@ -161,13 +170,20 @@ class TestPipelineCancellation:
             _check_cancelled(review_id)
 
         with (
-            patch("backend.services.orchestrator.async_session_factory") as mock_session_factory,
-            patch("backend.services.orchestrator._run_pipeline_stages", side_effect=fake_stages),
-            patch("backend.services.orchestrator._emit", new_callable=AsyncMock),
             patch(
-                "backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock
+                "scriptum_ai.backend.services.orchestrator.async_session_factory"
+            ) as mock_session_factory,
+            patch(
+                "scriptum_ai.backend.services.orchestrator._run_pipeline_stages",
+                side_effect=fake_stages,
+            ),
+            patch("scriptum_ai.backend.services.orchestrator._emit", new_callable=AsyncMock),
+            patch(
+                "scriptum_ai.backend.services.orchestrator._emit_sentinel", new_callable=AsyncMock
             ) as mock_sentinel,
-            patch("backend.services.orchestrator._update_status", new_callable=AsyncMock),
+            patch(
+                "scriptum_ai.backend.services.orchestrator._update_status", new_callable=AsyncMock
+            ),
         ):
             mock_session = AsyncMock()
             mock_session_factory.return_value.__aenter__ = AsyncMock(return_value=mock_session)
